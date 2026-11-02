@@ -43,6 +43,17 @@ claude plugin install chibi-companion --marketplace kzger/chibi-companion
 
 出現 `Add marketplace?` 時按 `y`，選 user scope 後按 Enter 即可。桌面版 App（`/plugin` 不能用時）：點提示框旁的 **+** → Plugins → Add marketplace，輸入 `kzger/chibi-companion`，再 Add plugin。
 
+#### 更新到 GitHub 上的新版
+
+```bash
+claude plugin marketplace update chibi-local
+claude plugin update chibi-companion@chibi-local
+```
+
+然後在**正在執行的** Claude Code 裡輸入 `/reload-plugins`。
+
+> `/exit` 再開 `claude` 不一定會重新載入：Claude Code 若以背景常駐（daemon）方式執行，重開只是 `claude attach` 回到同一個程序，記憶體裡仍是舊版 mod。`/reload-plugins` 一定有效。
+
 ### 從本機資料夾安裝
 
 ### Windows
@@ -200,7 +211,17 @@ Claude Code 偵測到 tmux 時會做兩件事——把顏色降成 256 色（暖
 }
 ```
 
-前提是 tmux 本身已開真彩色（`set -ag terminal-overrides ",xterm-256color:RGB"`）。只想切換畫面模式也可以執行 `/tui fullscreen`。`/chibi` 偵測到這兩種情況時會提示。
+前提是 tmux 本身已開真彩色（`set -ag terminal-overrides ",xterm-256color:RGB"`）。
+
+### tmux 裡動畫時游標狂閃、輸入法組字跟著閃
+
+Claude Code 每畫一幀都用「同步更新」包起來（先藏游標、畫圖、再把游標放回輸入框），終端機一次畫完就看不到游標移動。但 tmux 只有在知道外層終端機支援同步更新時才會照做，否則游標的每一步移動都會被畫出來。在 tmux 設定加上（Alacritty 0.13+、Ghostty、kitty、WezTerm、iTerm2 都支援）：
+
+```
+set -as terminal-features ",xterm-256color:sync"
+```
+
+tmux 是在連線時決定外層終端機的功能，所以要 detach（`prefix` `d`）再 `tmux attach`，或 `tmux kill-server` 重開。用 `tmux display -p '#{client_termfeatures}'` 確認清單裡有 `sync`。只想切換畫面模式也可以執行 `/tui fullscreen`。`/chibi` 偵測到這兩種情況時會提示。
 
 ---
 
@@ -249,7 +270,8 @@ Claude Code 偵測到 tmux 時會做兩件事——把顏色降成 256 色（暖
 
 - 上方列空間小，只畫她的上半身（頭到肩膀），臉部比較清楚；側面板畫全身。
 - 閒置 30 秒後上方列自動收起，有新事件再展開。
-- 你在輸入框打字時她會停住不動，避免重畫時游標閃爍；動畫每次重畫至少間隔 240ms（較快的動作改用跳幀，速度不變）。
+- 動畫每次重畫至少間隔 240ms（較快的動作改用跳幀，速度不變）。
+- 動畫時游標或輸入法組字一直閃：終端機沒有開「同步更新」（synchronized output）。tmux 裡尤其常見，見 macOS 的 tmux 說明。
 - 上方列可用高度不足 12 行時，退回一行文字：`✎ Claude 娘 · 工作中 正在改 auth.ts…`。
 - 非 fullscreen 的終端機上，面板會放在輸入框上方，並自動改用精簡排版。
 
@@ -317,6 +339,7 @@ claude plugin test plugin         # 執行 plugin/tests 的繪製測試
 | 完全沒出現 | `claude plugin list` 確認 `chibi-companion@chibi-local` 已啟用；用 `claude --debug` 啟動，搜尋 `chibi-companion` |
 | 面板沒開 | 終端機寬度不到 144 欄時，自動模式不會開面板，會改用上方列；可用 `/chibi pane` 強制開啟 |
 | 面板只出現在輸入框上方、不在右側 | 不是 fullscreen 畫面（tmux 預設如此）：執行 `/tui fullscreen`，或設定 `CLAUDE_CODE_NO_FLICKER=1`（見 macOS 的 tmux 說明） |
+| 動畫時游標一直閃、輸入法組字跟著閃 | tmux 沒開同步更新：加 `set -as terminal-features ",xterm-256color:sync"` 後重新 attach（見 macOS 的 tmux 說明） |
 | tmux 裡配色偏灰、跟其他終端機差很多 | Claude Code 在 tmux 裡只用 256 色：設定 `CLAUDE_CODE_TMUX_TRUECOLOR=1`（見 macOS 的 tmux 說明） |
 | Mac 上只看到空白、沒有圖 | 終端機不支援圖片，或 tmux 沒設定 passthrough；執行 `/chibi render cells` 改用字元畫，或換 Ghostty |
 | 圖案有細縫或格線 | 終端機用字型畫方塊字元而不是自己繪製；換字型，或調整行距為 1.0 |

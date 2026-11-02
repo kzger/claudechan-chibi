@@ -351,8 +351,6 @@ async function tick($: $T) {
     return // the redraw paints this frame
   }
   if (isDozing) return
-  // She holds still while the person types, so the caret stays put.
-  if ((await $.prompt.read()).text !== '') return
 
   // A stroll across the band now and then while she works.
   const band = sites.band
