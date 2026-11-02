@@ -120,17 +120,72 @@ macOS 第一次執行從其他電腦帶來的檔案，若出現「無法驗證�
 | Alacritty | 字元畫 | 可用。Alacritty 不支援任何圖片協定，無法顯示原圖；建議執行一次 `/chibi render cells`，省掉每次啟動時的偵測空白。想要原圖可改用 Ghostty（同樣是 GPU 加速、設定檔驅動，習慣最接近） |
 | 內建「終端機」Terminal.app | 字元畫 | 不建議：舊版不支援 24-bit 真彩色，顏色會跑掉 |
 
-**tmux 使用者**：tmux 只是把圖片「轉交」給外層的終端機，外層終端機本身要能畫圖才行。
+### 切換原圖／字元畫
 
-- **Alacritty + tmux**：無法顯示原圖（Alacritty 不支援圖片），只能用字元畫。
-- **Ghostty + tmux**：可以顯示原圖。在 `~/.tmux.conf` 加上下面兩行，然後執行 `tmux kill-server` 重開：
+| 指令 | 效果 |
+|---|---|
+| `/chibi render auto` | 預設。能畫原圖就用原圖，不支援時自動改字元畫 |
+| `/chibi render image` | 強制原圖 |
+| `/chibi render cells` | 強制字元畫（Alacritty 建議設這個，省掉啟動時的偵測空白） |
 
+輸入 `/chibi` 可看目前實際狀態，例如「目前畫面 — 面板：原圖，上方列：原圖」。設定會記住，下次啟動沿用。
+
+### Ghostty + tmux（macOS）
+
+tmux 只是把圖片「轉交」給外層終端機，外層終端機本身要能畫圖才行：
+
+| 組合 | 原圖 |
+|---|---|
+| Alacritty + tmux | ✗ 不行（Alacritty 不支援圖片），只能用字元畫 |
+| Ghostty + tmux | ✓ 可以，照下面設定 |
+| Ghostty（不用 tmux） | ✓ 可以，不用設定 |
+
+**1. 安裝**
+
+```bash
+brew install --cask ghostty
+brew install tmux        # 已安裝可略過；需要 tmux 3.3 以上（tmux -V 查版本）
 ```
+
+**2. 編輯 `~/.tmux.conf`，加上：**
+
+```tmux
+# 讓 Claude Code 的圖片穿過 tmux，交給 Ghostty 繪製（原圖模式必需）
 set -g allow-passthrough on
 set -g focus-events on
+
+# 真彩色（字元畫模式的顏色正確需要）
+set -g default-terminal "tmux-256color"
+set -as terminal-features ",xterm-ghostty:RGB"
 ```
 
-**從 Alacritty + tmux 換到 Ghostty**：可以原封不動沿用 tmux（session、detach、快捷鍵都一樣），只換外層終端機。若不想用 tmux，Ghostty 本身也有分割視窗（`Cmd+D` 左右分割、`Cmd+Shift+D` 上下分割、`Cmd+[` / `Cmd+]` 切換），但沒有 tmux 的 detach / 背景保留 session。
+**3. 讓設定生效**：舊的 tmux server 不會讀新設定，要整個重開：
+
+```bash
+tmux kill-server   # 會關閉所有 tmux session，先存好工作
+tmux
+```
+
+**4. 確認**：在 tmux 裡啟動 `claude`，輸入 `/chibi`，看到「面板：原圖」即成功。若是「字元」：
+
+- `tmux show -g allow-passthrough` 應顯示 `on`
+- `tmux -V` 應為 3.3 以上
+- 確認外層真的是 Ghostty（在 tmux 外執行 `echo $TERM_PROGRAM` 應顯示 `ghostty`）
+
+### 從 Alacritty + tmux 換到 Ghostty
+
+tmux 的 session、detach、快捷鍵、`.tmux.conf` 全部照舊沿用，只換外層終端機，再加上第 2 步的設定即可。
+
+不想用 tmux 的話，Ghostty 本身也能分割視窗：
+
+| 動作 | Ghostty 快捷鍵 |
+|---|---|
+| 左右分割 | `Cmd+D` |
+| 上下分割 | `Cmd+Shift+D` |
+| 切換上一個／下一個分割 | `Cmd+[` ／ `Cmd+]` |
+| 關閉目前分割 | `Cmd+W` |
+
+差別：Ghostty 的分割沒有 tmux 的 **detach**（關掉視窗程式就結束，不能放在背景之後再接回，也不能透過 SSH 接回同一個 session）。習慣 tmux 的話，建議 **Ghostty + tmux**。
 
 ---
 
@@ -247,7 +302,7 @@ claude plugin test plugin         # 執行 plugin/tests 的繪製測試
 | 面板沒開 | 終端機寬度不到 144 欄時，自動模式不會開面板，會改用上方列；可用 `/chibi pane` 強制開啟 |
 | Mac 上只看到空白、沒有圖 | 終端機不支援圖片，或 tmux 沒設定 passthrough；執行 `/chibi render cells` 改用字元畫，或換 Ghostty |
 | 圖案有細縫或格線 | 終端機用字型畫方塊字元而不是自己繪製；換字型，或調整行距為 1.0 |
-| 顏色怪、出現色塊 | 終端機沒開真彩色（例如 tmux 要設 `set -g default-terminal "tmux-256color"` 與 `terminal-overrides ",*:Tc"`） |
+| 顏色怪、出現色塊 | 終端機沒開真彩色；tmux 使用者見上方「Ghostty + tmux」第 2 步的真彩色設定 |
 | 圖案比例扁或長 | 字型行高不是 1:2；換一個等寬字型，或把行距設回 1.0 |
 | 想暫時關掉 | `/chibi off`，或 `claude plugin disable chibi-companion@chibi-local` |
 
