@@ -5,7 +5,7 @@ import type { LayoutMode, Prefs, RecentCall, RenderMode, SetName, View } from '.
 import { SET as CLASSIC } from './frames-classic'
 import { SET as SMOOTH } from './frames-smooth'
 import { pickState, type Flags } from './mood'
-import { makeCellCache, type SizeName, type SpriteSet, type StateName } from './sprite'
+import { makeCellCache, spriteRows, type SizeName, type SpriteSet, type StateName } from './sprite'
 
 // ─── constants ──────────────────────────────────────────────────────────────
 
@@ -52,6 +52,9 @@ const WALK_EVERY_MS = 40_000 // while working, a stroll across the band this oft
 const WALK_MAX = 16 // columns of room the stroll may use
 const BUBBLE_MIN = 30 // columns the band keeps for the speech bubble
 const PANE_POLL_MS = 1_000
+// Every blit moves the terminal's cursor away and back, which reads as a
+// flickering caret: faster states skip frames to draw at most this often.
+const MIN_FRAME_MS = 240
 const REPEAT = 3 // one-shot states play three loops, as in the Codex app
 
 const TITLE: Record<StateName, string> = {
@@ -113,6 +116,7 @@ let lastActivity = 0
 let turnStartedAt = 0
 let shown: StateName = 'idle'
 let frame = 0
+let stride = 1 // frames each blit moves on
 let isDozing = false
 let walk: { dir: 1 | -1; offset: number; room: number } | null = null
 let lastWalkAt = 0
@@ -191,6 +195,23 @@ function normalizePrefs(raw: unknown): Prefs {
   }
 }
 
+/**
+ * What stands between this terminal and the docked, true-colour companion:
+ * inside tmux Claude Code lowers colours to 256 (her warm browns turn grey)
+ * and keeps the main-screen layout, where a pane cannot dock at the side.
+ */
+async function screenHints($: $T, isFullscreen: boolean): Promise<string[]> {
+  const hints: string[] = []
+  const inTmux = (await $.env.get('TMUX')) !== undefined
+  if (inTmux && (await $.env.get('CLAUDE_CODE_TMUX_TRUECOLOR')) === undefined)
+    hints.push('⚠ 在 tmux 裡 Claude Code 只用 256 色，配色會偏灰：在 ~/.claude/settings.json 的 "env" 加 "CLAUDE_CODE_TMUX_TRUECOLOR": "1" 後重開')
+  if (!isFullscreen)
+    hints.push(
+      `⚠ 目前不是 fullscreen 畫面${inTmux ? '（tmux 預設如此）' : ''}，面板無法停靠在右側：執行 /tui fullscreen，或在 "env" 加 "CLAUDE_CODE_NO_FLICKER": "1" 後重開`,
+    )
+  return hints
+}
+
 const kindLabel = (site?: Site) => (site === undefined ? '未顯示' : site.kind === 'image' ? '原圖' : '字元')
 
 /** Real pixels unless the person chose cells, or this terminal showed it cannot draw them. */
@@ -240,7 +261,7 @@ async function drawSprite(
       return <Image key="sprite" source={{ png }} columns={columns} rows={rows} alt={alt} />
     }
   }
-  const { rows } = activeSet.sizes[size]
+  const rows = spriteRows(activeSet, size)
   const fill = hex(THEME.stage)
   sites[slot] = { kind: 'cells', requestId, size, width, rows, fill }
   const cells = cellsOf(activeSet, state, size, frameIndex(), width, offset, fill)
@@ -267,7 +288,9 @@ function nextDelay(): number {
   if (isDozing) return DOZE_TICK_MS
   const state = walk ? (walk.dir > 0 ? 'running-right' : 'running-left') : shown
   const d = activeSet.states[state].durations
-  return d[frame % d.length] ?? 150
+  const ms = d[frame % d.length] ?? 150
+  stride = ms < MIN_FRAME_MS ? Math.round(MIN_FRAME_MS / ms) : 1
+  return ms * stride
 }
 
 async function blitAll($: $T) {
@@ -328,6 +351,8 @@ async function tick($: $T) {
     return // the redraw paints this frame
   }
   if (isDozing) return
+  // She holds still while the person types, so the caret stays put.
+  if ((await $.prompt.read()).text !== '') return
 
   // A stroll across the band now and then while she works.
   const band = sites.band
@@ -343,7 +368,7 @@ async function tick($: $T) {
     if (now - lastWalkAt > WALK_EVERY_MS) walk = { dir: 1, offset: 0, room: band.width - activeSet.sizes.small.columns }
   }
 
-  frame += 1
+  frame += stride
   await blitAll($)
 }
 
@@ -473,6 +498,7 @@ export const register: Register = on => {
   on('command.run', { command: 'chibi' }, async ($, e) => {
     const [word, arg] = e.args.trim().split(/\s+/)
     const p = await read($, prefs)
+    const hints = await screenHints($, e.presentation?.isFullscreen !== false)
     const save = async (next: Prefs) => {
       await update($, prefs, () => next)
       await $.store.set('prefs', next)
@@ -499,13 +525,14 @@ export const register: Register = on => {
       await save({ ...p, mode: word })
       if (word === 'auto' || word === 'pane') {
         const opened = await $.ui.open({ id: PANE, title: PANE_TITLE, columns: PANE_COLUMNS, backgroundColor: THEME.surface })
-        if (!opened.isPlaced && word === 'pane') return { text: `面板還沒放上：${opened.reason ?? '畫面太窄'}` }
+        if (!opened.isPlaced && word === 'pane')
+          return { text: [`面板還沒放上：${opened.reason ?? '畫面太窄'}`, ...hints].join('\n') }
       } else {
         await $.ui.close({ id: PANE })
       }
       if (word === 'off') $.ui.status(`${ICON[shown]} Claude 娘：${TITLE[shown]}`)
       const label = { auto: '自動（寬用面板、窄用上方列）', pane: '側面板', band: '輸入框上方列', off: '只用狀態列' }[word]
-      return { text: `Claude 娘顯示方式：${label}` }
+      return { text: [`Claude 娘顯示方式：${label}`, ...(word === 'auto' || word === 'pane' ? hints : [])].join('\n') }
     }
     return {
       text: [
@@ -514,6 +541,7 @@ export const register: Register = on => {
         '/chibi auto | pane | band | off     切換顯示方式',
         '/chibi set smooth | classic         切換圖庫',
         '/chibi render auto | image | cells  切換繪製方式',
+        ...hints,
       ].join('\n'),
     }
   })
@@ -534,18 +562,18 @@ export const register: Register = on => {
     const cols = e.props.bodyColumns
     const isDock = e.props.placement === 'dock'
     const size: SizeName = isDock && cols >= activeSet.sizes.big.columns ? 'big' : 'small'
-    const { columns: sc, rows: sr } = activeSet.sizes[size]
+    const sc = activeSet.sizes[size].columns
     const sprite = await drawSprite($, { Raster, Image }, 'pane', e.requestId, size, sc, shown, 0)
-    const spriteRows = sites.pane?.rows ?? sr
+    const shownRows = sites.pane?.rows ?? spriteRows(activeSet, size)
 
     if (!isDock) return compact(els, sprite, v, cols, false) // seated inline above the prompt
 
-    // stage (2 + sprite) · name (2) · bubble (3) · stats (1) · recent heading (2)
-    const room = Math.max(0, e.props.scroll.bodyRows - spriteRows - 10)
+    // stage (sprite) · name (2) · bubble (3) · stats (1) · recent heading (2)
+    const room = Math.max(0, e.props.scroll.bodyRows - shownRows - 8)
     const recent = v.recent.slice(-room)
     return (
       <Box flexDirection="column">
-        <Box backgroundColor={THEME.stage} justifyContent="center" paddingY={1}>
+        <Box backgroundColor={THEME.stage} justifyContent="center">
           {sprite}
         </Box>
         <Box paddingX={1} marginTop={1}>
@@ -607,7 +635,8 @@ export const register: Register = on => {
     activeSet = SETS[p.set]
     renderPref = p.render
     imageBroken = await read($, imageFailed)
-    const { columns: sc, rows: sr } = activeSet.sizes.small
+    const sc = activeSet.sizes.small.columns
+    const sr = spriteRows(activeSet, 'small')
     const cols = e.props.bodyColumns
 
     if (e.props.maxRows < sr || cols < sc + 16) {

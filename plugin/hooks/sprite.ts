@@ -70,6 +70,35 @@ function toBase64(bytes: Uint8Array): string {
   return out
 }
 
+const topBlank = new Map<string, number>()
+
+/**
+ * Rows at the top that no frame of the set ever paints at this size: the
+ * frames share one box sized for the highest pose, so these stay empty.
+ */
+function blankTop(set: SpriteSet, size: SizeName): number {
+  const id = `${set.name}|${size}`
+  let top = topBlank.get(id)
+  if (top !== undefined) return top
+  const { columns, rows } = set.sizes[size]
+  top = rows - 1
+  for (const s of Object.values(set.states)) {
+    for (const f of s[size]) {
+      const bytes = fromBase64(f)
+      let r = 0
+      while (r < top && bytes.subarray(r * columns * 3, (r + 1) * columns * 3).every(b => b === 0)) r++
+      top = r
+    }
+  }
+  topBlank.set(id, top)
+  return top
+}
+
+/** The rows a frame takes once the never-painted top rows are dropped. */
+export function spriteRows(set: SpriteSet, size: SizeName): number {
+  return set.sizes[size].rows - blankTop(set, size)
+}
+
 /**
  * The Raster `cells` for one frame, drawn `offset` columns into a raster
  * `width` columns wide (wider than the sprite only while it walks).
@@ -84,7 +113,9 @@ export function frameCells(
   offset: number,
   fill: number = DEFAULT,
 ): string {
-  const { columns, rows } = set.sizes[size]
+  const { columns } = set.sizes[size]
+  const top = blankTop(set, size)
+  const rows = spriteRows(set, size)
   const frames = set.states[state][size]
   const bytes = fromBase64(frames[frame % frames.length] ?? '')
   const colour = (i: number) => (i === 0 ? fill : (set.palette[i - 1] ?? fill))
@@ -99,7 +130,7 @@ export function frameCells(
         words[at + 2] = fill
         continue
       }
-      const src = (r * columns + sx) * 3
+      const src = ((r + top) * columns + sx) * 3
       words[at] = GLYPHS[bytes[src] ?? 0] ?? 0x20
       words[at + 1] = colour(bytes[src + 1] ?? 0)
       words[at + 2] = colour(bytes[src + 2] ?? 0)

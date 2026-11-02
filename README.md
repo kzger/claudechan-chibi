@@ -187,6 +187,21 @@ tmux 的 session、detach、快捷鍵、`.tmux.conf` 全部照舊沿用，只換
 
 差別：Ghostty 的分割沒有 tmux 的 **detach**（關掉視窗程式就結束，不能放在背景之後再接回，也不能透過 SSH 接回同一個 session）。習慣 tmux 的話，建議 **Ghostty + tmux**。
 
+### tmux 裡顏色偏灰、看不到右側面板
+
+Claude Code 偵測到 tmux 時會做兩件事——把顏色降成 256 色（暖棕色背景變成灰色），以及改用一般（非 fullscreen）畫面，這時面板無法停靠在右側，只能放在輸入框上方。在 `~/.claude/settings.json` 加上下面的 `env`，然後重開 `claude`：
+
+```json
+{
+  "env": {
+    "CLAUDE_CODE_TMUX_TRUECOLOR": "1",
+    "CLAUDE_CODE_NO_FLICKER": "1"
+  }
+}
+```
+
+前提是 tmux 本身已開真彩色（`set -ag terminal-overrides ",xterm-256color:RGB"`）。只想切換畫面模式也可以執行 `/tui fullscreen`。`/chibi` 偵測到這兩種情況時會提示。
+
 ---
 
 ## 使用
@@ -234,6 +249,7 @@ tmux 的 session、detach、快捷鍵、`.tmux.conf` 全部照舊沿用，只換
 
 - 上方列空間小，只畫她的上半身（頭到肩膀），臉部比較清楚；側面板畫全身。
 - 閒置 30 秒後上方列自動收起，有新事件再展開。
+- 你在輸入框打字時她會停住不動，避免重畫時游標閃爍；動畫每次重畫至少間隔 240ms（較快的動作改用跳幀，速度不變）。
 - 上方列可用高度不足 12 行時，退回一行文字：`✎ Claude 娘 · 工作中 正在改 auth.ts…`。
 - 非 fullscreen 的終端機上，面板會放在輸入框上方，並自動改用精簡排版。
 
@@ -300,6 +316,8 @@ claude plugin test plugin         # 執行 plugin/tests 的繪製測試
 |---|---|
 | 完全沒出現 | `claude plugin list` 確認 `chibi-companion@chibi-local` 已啟用；用 `claude --debug` 啟動，搜尋 `chibi-companion` |
 | 面板沒開 | 終端機寬度不到 144 欄時，自動模式不會開面板，會改用上方列；可用 `/chibi pane` 強制開啟 |
+| 面板只出現在輸入框上方、不在右側 | 不是 fullscreen 畫面（tmux 預設如此）：執行 `/tui fullscreen`，或設定 `CLAUDE_CODE_NO_FLICKER=1`（見 macOS 的 tmux 說明） |
+| tmux 裡配色偏灰、跟其他終端機差很多 | Claude Code 在 tmux 裡只用 256 色：設定 `CLAUDE_CODE_TMUX_TRUECOLOR=1`（見 macOS 的 tmux 說明） |
 | Mac 上只看到空白、沒有圖 | 終端機不支援圖片，或 tmux 沒設定 passthrough；執行 `/chibi render cells` 改用字元畫，或換 Ghostty |
 | 圖案有細縫或格線 | 終端機用字型畫方塊字元而不是自己繪製；換字型，或調整行距為 1.0 |
 | 顏色怪、出現色塊 | 終端機沒開真彩色；tmux 使用者見上方「Ghostty + tmux」第 2 步的真彩色設定 |

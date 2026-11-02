@@ -80,3 +80,12 @@ test('where frames can be read the pane draws the PNG as an Image', async ($, on
   expect(await ui.find({ type: 'Raster', key: 'sprite' })).toBeUndefined()
   await ui.unmount()
 })
+
+test('/chibi names the tmux settings that keep colours and the dock', async ($, on) => {
+  engine(on)
+  mock.env(on, { TMUX: '/tmp/tmux-501/default,1,0' })
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+
+  const out = await $.command.run({ command: 'chibi', args: '' })
+  expect(out.text).toContain('CLAUDE_CODE_TMUX_TRUECOLOR')
+})
