@@ -1,0 +1,14 @@
+Claude 娘 終端機陪伴 mod（chibi-companion）— 素材來源與授權
+
+原畫：CrossPet（lokicorvus）
+網站：https://genderswapai.com/zh-TW/ai-gijinka/claude
+原作授權：CC BY-NC-SA 4.0
+授權說明：https://github.com/lokicorvus/crosspet/blob/6e98970f6ff9b44e8ac85215241cabcd78f67d92/characters/LICENSE.md
+
+動畫幀來源：
+- smooth  ← claude-chibi-native-smooth/dist/claude-chibi-native-smooth/spritesheet.png
+- classic ← claude-chibi/dist/claude-chibi/spritesheet-hover-calm.png
+補繪姿勢以原角色為參考，透過 ImageGen 製作，並非原作者繪製。
+
+本 mod 將上述精靈圖縮小、減色為終端機半格字元畫（plugin/hooks/frames-*.ts），
+屬改作，沿用 CC BY-NC-SA 4.0：須保留署名、限非商業用途、以相同授權分享。
