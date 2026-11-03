@@ -342,7 +342,7 @@ fi
 | `waiting` 等待 | 權限確認、AskUserQuestion、計畫核准 | 持續到你回應 |
 | `failed` 失敗 | 工具出錯或被拒絕、你中斷、API 錯誤 | 播三輪 |
 | `review` 閱讀 | 這一輪完成 | 播三輪 |
-| `idle` 待機 | 沒事時；閒置 5 分鐘後停在閉眼幀打瞌睡 | 持續 |
+| `idle` 待機 | 沒事時；閒置 20 秒後停在閉眼幀打瞌睡 | 持續 |
 | `running-left/right` | 工作超過 40 秒時，在上方列左右走一趟 | 一趟 |
 
 同時符合多個狀態時，顯示哪一個由 `plugin/hooks/mood.ts` 的 `pickState()` 決定。

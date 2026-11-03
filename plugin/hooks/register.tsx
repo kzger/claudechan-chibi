@@ -44,7 +44,7 @@ const CHIP: Record<StateName, string> = {
 }
 const SETS: Record<SetName, SpriteSet> = { smooth: SMOOTH, classic: CLASSIC }
 
-const DOZE_AFTER_MS = 5 * 60_000 // idle this long: she dozes off
+const DOZE_AFTER_MS = 20_000 // idle this long: she dozes off
 const DOZE_FRAME = 3 // the idle frame with closed eyes
 const DOZE_TICK_MS = 4_000
 const WALK_EVERY_MS = 40_000 // while working, a stroll across the band this often
