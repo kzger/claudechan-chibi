@@ -75,7 +75,7 @@ const MIN_FRAME_MS = 240
 const REPEAT = 3 // one-shot states play three loops, as in the Codex app
 // A click on her plays one reaction; this many inside the window and she gets cross.
 const POKE_WINDOW_MS = 4_000
-const POKE_ANGRY_AT = 5
+const POKE_ANGRY_AT = 3
 const POKE_MIN_MS = 1_500
 const POKES: { state: StateName; text: string }[] = [
   { state: 'waving', text: '嗨～找我嗎？' },
@@ -167,6 +167,7 @@ let mode: LayoutMode = 'auto'
 let renderPref: RenderMode = 'auto'
 let imageBroken = false
 let timer: { cancel: () => void } | null = null
+let clockGen = 0
 /** Whether the screen docks a pane at the side, as last measured; undefined before. */
 let canDock: boolean | undefined
 /** Set when the pane docked while the band was asked for: the clock closes it. */
@@ -207,6 +208,7 @@ async function poke($: $T) {
   }
   pokeBubble = bubble
   await setView($, { bubble, isDozing: false })
+  await wake($)
 }
 
 function oneShotMs(state: StateName): number {
@@ -481,15 +483,27 @@ async function tick($: $T) {
 
 function startClock($: $T) {
   timer?.cancel()
+  const gen = ++clockGen // a restarted clock leaves the old loop to end
   const step = async () => {
     try {
       await tick($)
     } catch {
       // a lost frame is fine; the next tick draws again
     }
+    if (gen !== clockGen) return
     timer = $.clock.after(nextDelay(), () => void step())
   }
   void step()
+}
+
+/**
+ * Draw a change of mood now rather than at the next tick: asleep the clock
+ * waits DOZE_TICK_MS, and a slow frame (idle's last) nearly two seconds.
+ */
+async function wake($: $T) {
+  if (timer === null) return
+  const now = await $.clock.now()
+  if (isDozing || pickState({ ...flags, now }) !== shown) startClock($)
 }
 
 // ─── hooks ──────────────────────────────────────────────────────────────────
@@ -534,6 +548,7 @@ export const register: Register = on => {
     lastActivity = now
     flags = { ...flags, ackUntil: now + oneShotMs('jumping'), failedUntil: 0, reviewUntil: 0 }
     await setView($, { bubble: '收到！馬上開始', isDozing: false })
+    await wake($)
     // A pane opened unasked waits below the dock's width; opened now, at the
     // person's prompt, it is placed at any width: framed above the prompt on a
     // narrow screen, which reads better than the band. The band mode takes
@@ -551,6 +566,7 @@ export const register: Register = on => {
     lastActivity = now
     turnStartedAt = now
     flags = { ...flags, isWorking: true }
+    await wake($)
     await setView($, { tools: 0 })
     return next(e)
   })
@@ -559,6 +575,7 @@ export const register: Register = on => {
     flags = { ...flags, isWaiting: true }
     lastActivity = await $.clock.now()
     await setView($, { bubble: `想用 ${e.tool_name}，可以嗎？` })
+    await wake($)
     return next(e)
   }).catch(passThrough)
 
@@ -578,6 +595,7 @@ export const register: Register = on => {
       tools: v.tools + 1,
       recent: [...v.recent, { id, tool, target, isOk: null } as RecentCall].slice(-8),
     }))
+    if (asksPerson) await wake($)
 
     const result = await next(e)
 
@@ -585,6 +603,7 @@ export const register: Register = on => {
     lastActivity = now
     const isFailed = result.deny !== undefined || result.isError === true
     flags = { ...flags, isWaiting: false, ...(isFailed ? { failedUntil: now + oneShotMs('failed') } : {}) }
+    await wake($)
     await update($, view, v => ({
       ...v,
       ...(isFailed ? { bubble: result.deny !== undefined ? `${tool} 被拒絕了…` : `唔… ${tool} 失敗了` } : {}),
@@ -607,6 +626,7 @@ export const register: Register = on => {
       const why = e.reason === 'aborted' ? '被打斷了…需要再叫我' : '唔…這輪出錯了'
       await setView($, { bubble: why, lastTurnSeconds: seconds })
     }
+    await wake($)
     return done
   })
 

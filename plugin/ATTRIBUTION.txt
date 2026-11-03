@@ -14,7 +14,8 @@ Claude ちゃん 終端機陪伴 mod（chibi-companion）— 素材來源與授�
 屬改作，沿用 CC BY-NC-SA 4.0：須保留署名、限非商業用途、以相同授權分享。
 
 生氣動畫（plugin/assets/*/angry/）：
-由 tools/build_angry.py 以上述 failed 幀改作（前傾、跺腳），頭上的生氣符號為
+叉腰姿勢 tools/assets/angry-pose.png 以原角色為參考透過圖像生成製作，並非原作者繪製；
+由 tools/build_angry.py 縮放、加上前傾動作，頭上的生氣符號為
 Twemoji 的 U+1F4A2（💢），© Twitter, Inc. and other contributors，
 授權 CC BY 4.0：https://creativecommons.org/licenses/by/4.0/
 來源：https://github.com/jdecked/twemoji（v15.1.0，assets/72x72/1f4a2.png），已縮小並加上淺色描邊。
