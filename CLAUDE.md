@@ -16,6 +16,7 @@ claude plugin test plugin       # 執行 plugin/tests 的繪製測試
 **每次修改 `plugin/` 並 push 時，Claude 要主動完成以下步驟（不用等使用者要求）：**
 
 1. 把 `plugin/.claude-plugin/plugin.json` 的 `version` 往上升（例如 `0.3.0` → `0.3.1`）。版本沒變，更新指令會回報「already at the latest version」，快取仍是舊程式碼。
+   同時更新 `README.md` 開頭的「**目前版本：x.y.z**（日期）」，版本號與 `plugin.json` 一致，日期填發佈當天。
 2. 執行 `claude plugin validate plugin` 與 `claude plugin test plugin`，都通過才 commit、push。
 3. push 後在本機更新：
    ```bash
