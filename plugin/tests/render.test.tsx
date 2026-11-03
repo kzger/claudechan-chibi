@@ -112,3 +112,20 @@ test('the picture grows with the room: a wider dock, a taller terminal', async (
   expect(tallBand).toBeGreaterThan(shortBand)
   expect(tallBand).toBeLessThanOrEqual(18)
 })
+
+test('a short band keeps her face beside one line', async ($, on) => {
+  engine(on)
+  on('fs.read', () => ({ value: { base64: PNG } }))
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+
+  const ui = await $.ui.mount({ ...BAND, props: { ...BAND.props, maxRows: 3 }, surface: 'terminal' })
+  const img = await ui.find({ type: 'Image', key: 'sprite' })
+  expect(img).toBeDefined()
+  expect(Number(img?.props.rows)).toBe(3)
+  expect(await ui.find({ type: 'Text', text: /Claude 娘/ })).toBeDefined()
+  await ui.unmount()
+
+  const one = await $.ui.mount({ ...BAND, props: { ...BAND.props, maxRows: 1 }, surface: 'terminal' })
+  expect(await one.find({ type: 'Image', key: 'sprite' })).toBeUndefined()
+  await one.unmount()
+})

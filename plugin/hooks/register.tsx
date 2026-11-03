@@ -62,7 +62,8 @@ const DOCK_WIDTH_SHARE = 0.6
 const DOCK_ROWS_SHARE = 0.4
 const DOCK_TEXT_ROWS = 8 // name (2) · bubble (3) · stats (1) · recent heading (2)
 const DOCK_RECENT_MIN = 4
-const IMAGE_ROWS_MIN = 4
+const IMAGE_ROWS_MIN = 5 // below this the band draws its mini row: a small face beside one line
+const MINI_ROWS_MIN = 2
 const PANE_POLL_MS = 1_000
 const DOCK_MIN_COLUMNS = 110 // the fullscreen layout docks a pane from this width
 // Every blit moves the terminal's cursor away and back, which reads as a
@@ -269,7 +270,7 @@ type SpriteElements = Pick<Elements['terminal'], 'Raster' | 'Image'>
 function imageBox(size: SizeName, maxColumns: number, maxRows: number): { columns: number; rows: number } {
   const base = activeSet.imageSizes[size]
   const perRow = base.columns / base.rows // columns per row of the picture
-  const rows = Math.max(IMAGE_ROWS_MIN, Math.min(255, Math.floor(maxRows), Math.floor(maxColumns / perRow)))
+  const rows = Math.max(1, Math.min(255, Math.floor(maxRows), Math.floor(maxColumns / perRow)))
   return { columns: Math.max(1, Math.min(255, Math.round(rows * perRow))), rows }
 }
 
@@ -706,6 +707,24 @@ export const register: Register = on => {
     const { state, offset } = bandSprite()
     const isImage = wantsImage() && (await loadPng($, activeSet, state, frameIndex(), 'small')) !== null
     const tooSmall = isImage ? bandRows < IMAGE_ROWS_MIN || spriteRoom.columns < 8 : e.props.maxRows < sr
+
+    // A short band (a small split, a tall status line): her face as tall as
+    // the rows left, beside the one-line status.
+    if (isImage && tooSmall && bandRows >= MINI_ROWS_MIN && cols >= 40) {
+      const face = await drawSprite($, { Raster, Image }, 'band', e.requestId, 'small', sc, state, 0, { columns: 12, rows: bandRows })
+      return (
+        <Box flexDirection="row" width={cols} alignItems="center" backgroundColor={THEME.surface}>
+          <Box backgroundColor={THEME.stage}>{face}</Box>
+          <Box marginLeft={1} flexShrink={1}>
+            <Text wrap="truncate-end">
+              {chip(els, v)}
+              <Text bold color={THEME.accent}> Claude 娘</Text>
+              <Text color={THEME.muted}> {v.bubble}</Text>
+            </Text>
+          </Box>
+        </Box>
+      )
+    }
     if (tooSmall || cols < sc + 16) {
       sites.band = undefined
       return (
