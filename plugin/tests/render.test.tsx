@@ -129,3 +129,23 @@ test('a short band keeps her face beside one line', async ($, on) => {
   expect(await one.find({ type: 'Image', key: 'sprite' })).toBeUndefined()
   await one.unmount()
 })
+
+test('a prompt seats the pane that waited for room', async ($, on) => {
+  mock.clock(on)
+  mock.store(on)
+  on('command.register', () => ({ value: { command: 'chibi' } }))
+  on('ui.panes', () => ({ value: [] }))
+  on('ui.blit', () => ({ value: {} }))
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  let opens = 0
+  on('ui.open', () => {
+    opens += 1
+    return { value: { isPlaced: true } }
+  })
+  on('prompt.submit', (_, e) => ({ text: e.text }))
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+  const before = opens
+
+  await $.prompt.submit({ text: 'hi' })
+  expect(opens).toBe(before + 1)
+})

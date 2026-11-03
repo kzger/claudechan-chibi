@@ -1,6 +1,6 @@
 {
   "name": "chibi-companion",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "Claude 娘 Q 版動畫陪伴：寬螢幕側面板、窄螢幕輸入框上方列，依 Claude Code 事件切換 9 種動作。",
   "author": { "name": "kzger" },
   "license": "CC-BY-NC-SA-4.0",

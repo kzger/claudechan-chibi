@@ -64,7 +64,6 @@ const DOCK_RECENT_MIN = 4
 const IMAGE_ROWS_MIN = 5 // below this the band draws its mini row: a small face beside one line
 const MINI_ROWS_MIN = 2
 const PANE_POLL_MS = 1_000
-const DOCK_MIN_COLUMNS = 110 // the fullscreen layout docks a pane from this width
 // Every blit moves the terminal's cursor away and back, which reads as a
 // flickering caret: faster states skip frames to draw at most this often.
 const MIN_FRAME_MS = 240
@@ -139,11 +138,6 @@ let mode: LayoutMode = 'auto'
 let renderPref: RenderMode = 'auto'
 let imageBroken = false
 let timer: { cancel: () => void } | null = null
-/** Set by `/chibi auto` on a narrow screen: the clock reopens the pane unasked, so it waits for room. */
-let reopenUnasked = false
-/** Where the pane was last drawn, and whether the terminal docks panes at all. */
-let panePlacement: 'dock' | 'inline' | undefined
-let isFullscreen = false
 const sites: { pane?: Site; band?: Site } = {}
 const cellsOf = makeCellCache()
 const pngCache = new Map<string, string | null>()
@@ -365,15 +359,6 @@ async function tick($: $T) {
 
   if (now - lastPanePoll >= PANE_POLL_MS) {
     lastPanePoll = now
-    if (mode === 'auto' && isFullscreen && panePlacement === 'inline') {
-      // Narrowed below the dock: give the room back to the band until it widens.
-      await $.ui.close({ id: PANE })
-      panePlacement = undefined
-      reopenUnasked = true
-    } else if (reopenUnasked && mode === 'auto') {
-      void $.ui.open(paneArgs())
-      reopenUnasked = false
-    }
     const panes = await $.ui.panes()
     const isUp = panes.some(p => p.id === PANE && p.isPlaced && p.isShown)
     if (isUp !== (await read($, paneShown))) await update($, paneShown, () => isUp)
@@ -466,6 +451,13 @@ export const register: Register = on => {
     lastActivity = now
     flags = { ...flags, ackUntil: now + oneShotMs('jumping'), failedUntil: 0, reviewUntil: 0 }
     await setView($, { bubble: '收到！馬上開始', isDozing: false })
+    // A pane opened unasked waits below the dock's width; opened now, at the
+    // person's prompt, it is placed at any width: framed above the prompt on a
+    // narrow screen, which reads better than the band.
+    if (mode === 'auto' || mode === 'pane') {
+      const panes = await $.ui.panes()
+      if (!panes.some(p => p.id === PANE && p.isPlaced)) void $.ui.open(paneArgs())
+    }
     return next(e)
   }).catch(passThrough)
 
@@ -562,13 +554,7 @@ export const register: Register = on => {
     }
     if (word === 'auto' || word === 'pane' || word === 'band' || word === 'off') {
       await save({ ...p, mode: word })
-      const canDock = e.presentation?.isFullscreen !== false && (e.presentation?.columns ?? DOCK_MIN_COLUMNS) >= DOCK_MIN_COLUMNS
-      if (word === 'auto' && !canDock) {
-        // Opened now, at the person's word, it would sit inline at any width.
-        // Closed, and reopened by the clock, it waits until it can dock.
-        await $.ui.close({ id: PANE })
-        reopenUnasked = true
-      } else if (word === 'auto' || word === 'pane') {
+      if (word === 'auto' || word === 'pane') {
         const opened = await $.ui.open(paneArgs())
         if (!opened.isPlaced && word === 'pane')
           return { text: [`面板還沒放上：${opened.reason ?? '畫面太窄'}`, ...hints].join('\n') }
@@ -606,8 +592,6 @@ export const register: Register = on => {
     imageBroken = await read($, imageFailed)
     const cols = e.props.bodyColumns
     const isDock = e.props.placement === 'dock'
-    panePlacement = e.props.placement
-    if (e.viewport?.isFullscreen !== undefined) isFullscreen = e.viewport.isFullscreen
     const size: SizeName = isDock && cols >= activeSet.sizes.big.columns ? 'big' : 'small'
     const sc = activeSet.sizes[size].columns
     const bodyRows = e.props.scroll.bodyRows
@@ -693,7 +677,6 @@ export const register: Register = on => {
     const cols = e.props.bodyColumns
 
     // A picture takes a share of the terminal's height; cells keep their one size.
-    if (e.viewport?.isFullscreen !== undefined) isFullscreen = e.viewport.isFullscreen
     const termRows = e.viewport?.rows ?? 40
     const bandRows = Math.min(e.props.maxRows, Math.max(BAND_ROWS_MIN, Math.min(BAND_ROWS_MAX, Math.round(termRows * BAND_ROWS_SHARE))))
     const spriteRoom = { columns: cols - BUBBLE_MIN - 6, rows: bandRows }
