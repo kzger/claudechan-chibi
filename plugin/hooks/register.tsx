@@ -51,7 +51,17 @@ const DOZE_TICK_MS = 4_000
 const WALK_EVERY_MS = 40_000 // while working, a stroll across the band this often
 const WALK_MAX = 16 // columns of room the stroll may use
 const BUBBLE_MIN = 30 // columns the band keeps for the speech bubble
+// A picture scales to the room it has: the band takes this share of the
+// terminal's rows (within the bounds), the dock fills its width and keeps
+// rows for the chip, bubble, stats and a few recent calls.
+const BAND_ROWS_SHARE = 0.3
+const BAND_ROWS_MIN = 8
+const BAND_ROWS_MAX = 18
+const DOCK_TEXT_ROWS = 8 // name (2) · bubble (3) · stats (1) · recent heading (2)
+const DOCK_RECENT_MIN = 4
+const IMAGE_ROWS_MIN = 4
 const PANE_POLL_MS = 1_000
+const DOCK_MIN_COLUMNS = 110 // the fullscreen layout docks a pane from this width
 // Every blit moves the terminal's cursor away and back, which reads as a
 // flickering caret: faster states skip frames to draw at most this often.
 const MIN_FRAME_MS = 240
@@ -126,6 +136,11 @@ let mode: LayoutMode = 'auto'
 let renderPref: RenderMode = 'auto'
 let imageBroken = false
 let timer: { cancel: () => void } | null = null
+/** Set by `/chibi auto` on a narrow screen: the clock reopens the pane unasked, so it waits for room. */
+let reopenUnasked = false
+/** Where the pane was last drawn, and whether the terminal docks panes at all. */
+let panePlacement: 'dock' | 'inline' | undefined
+let isFullscreen = false
 const sites: { pane?: Site; band?: Site } = {}
 const cellsOf = makeCellCache()
 const pngCache = new Map<string, string | null>()
@@ -247,9 +262,18 @@ async function loadPng($: $T, set: SpriteSet, state: StateName, f: number, size:
 
 type SpriteElements = Pick<Elements['terminal'], 'Raster' | 'Image'>
 
+/** The largest box of cells within `maxColumns` x `maxRows` that keeps the picture's aspect. */
+function imageBox(size: SizeName, maxColumns: number, maxRows: number): { columns: number; rows: number } {
+  const base = activeSet.imageSizes[size]
+  const perRow = base.columns / base.rows // columns per row of the picture
+  const rows = Math.max(IMAGE_ROWS_MIN, Math.min(255, Math.floor(maxRows), Math.floor(maxColumns / perRow)))
+  return { columns: Math.max(1, Math.min(255, Math.round(rows * perRow))), rows }
+}
+
 /**
  * The sprite of one site: an Image of the PNG frame where the terminal draws
- * pictures, else a Raster of quadrant cells. Records the site for the clock.
+ * pictures, sized to `room`, else a Raster of quadrant cells (fixed sizes).
+ * Records the site for the clock.
  */
 async function drawSprite(
   $: $T,
@@ -260,12 +284,13 @@ async function drawSprite(
   width: number,
   state: StateName,
   offset: number,
+  room: { columns: number; rows: number },
 ) {
   const { Raster, Image } = els
   if (wantsImage()) {
     const png = await loadPng($, activeSet, state, frameIndex(), size)
     if (png !== null) {
-      const { columns, rows } = activeSet.imageSizes[size]
+      const { columns, rows } = imageBox(size, room.columns, room.rows)
       sites[slot] = { kind: 'image', requestId, size, width: columns, rows, fill: hex(THEME.stage) }
       const alt = renderPref === 'image' ? 'Claude 娘（這個終端機不支援圖片）' : ' '
       return <Image key="sprite" source={{ png }} columns={columns} rows={rows} alt={alt} />
@@ -342,6 +367,15 @@ async function tick($: $T) {
 
   if (now - lastPanePoll >= PANE_POLL_MS) {
     lastPanePoll = now
+    if (mode === 'auto' && isFullscreen && panePlacement === 'inline') {
+      // Narrowed below the dock: give the room back to the band until it widens.
+      await $.ui.close({ id: PANE })
+      panePlacement = undefined
+      reopenUnasked = true
+    } else if (reopenUnasked && mode === 'auto') {
+      void $.ui.open(paneArgs())
+      reopenUnasked = false
+    }
     const panes = await $.ui.panes()
     const isUp = panes.some(p => p.id === PANE && p.isPlaced && p.isShown)
     if (isUp !== (await read($, paneShown))) await update($, paneShown, () => isUp)
@@ -531,7 +565,13 @@ export const register: Register = on => {
     }
     if (word === 'auto' || word === 'pane' || word === 'band' || word === 'off') {
       await save({ ...p, mode: word })
-      if (word === 'auto' || word === 'pane') {
+      const canDock = e.presentation?.isFullscreen !== false && (e.presentation?.columns ?? DOCK_MIN_COLUMNS) >= DOCK_MIN_COLUMNS
+      if (word === 'auto' && !canDock) {
+        // Opened now, at the person's word, it would sit inline at any width.
+        // Closed, and reopened by the clock, it waits until it can dock.
+        await $.ui.close({ id: PANE })
+        reopenUnasked = true
+      } else if (word === 'auto' || word === 'pane') {
         const opened = await $.ui.open(paneArgs())
         if (!opened.isPlaced && word === 'pane')
           return { text: [`面板還沒放上：${opened.reason ?? '畫面太窄'}`, ...hints].join('\n') }
@@ -569,15 +609,20 @@ export const register: Register = on => {
     imageBroken = await read($, imageFailed)
     const cols = e.props.bodyColumns
     const isDock = e.props.placement === 'dock'
+    panePlacement = e.props.placement
+    if (e.viewport?.isFullscreen !== undefined) isFullscreen = e.viewport.isFullscreen
     const size: SizeName = isDock && cols >= activeSet.sizes.big.columns ? 'big' : 'small'
     const sc = activeSet.sizes[size].columns
-    const sprite = await drawSprite($, { Raster, Image }, 'pane', e.requestId, size, sc, shown, 0)
+    const bodyRows = e.props.scroll.bodyRows
+    const spriteRoom = isDock
+      ? { columns: cols - 2, rows: bodyRows - DOCK_TEXT_ROWS - DOCK_RECENT_MIN }
+      : { columns: cols - BUBBLE_MIN - 6, rows: bodyRows } // inline: fit the rows the pane has
+    const sprite = await drawSprite($, { Raster, Image }, 'pane', e.requestId, size, sc, shown, 0, spriteRoom)
     const shownRows = sites.pane?.rows ?? spriteRows(activeSet, size)
 
     if (!isDock) return compact(els, sprite, v, cols, false) // seated inline above the prompt
 
-    // stage (sprite) · name (2) · bubble (3) · stats (1) · recent heading (2)
-    const room = Math.max(0, e.props.scroll.bodyRows - shownRows - 8)
+    const room = Math.max(0, bodyRows - shownRows - DOCK_TEXT_ROWS)
     const recent = v.recent.slice(-room)
     return (
       <Box flexDirection="column">
@@ -647,7 +692,15 @@ export const register: Register = on => {
     const sr = spriteRows(activeSet, 'small')
     const cols = e.props.bodyColumns
 
-    if (e.props.maxRows < sr || cols < sc + 16) {
+    // A picture takes a share of the terminal's height; cells keep their one size.
+    if (e.viewport?.isFullscreen !== undefined) isFullscreen = e.viewport.isFullscreen
+    const termRows = e.viewport?.rows ?? 40
+    const bandRows = Math.min(e.props.maxRows, Math.max(BAND_ROWS_MIN, Math.min(BAND_ROWS_MAX, Math.round(termRows * BAND_ROWS_SHARE))))
+    const spriteRoom = { columns: cols - BUBBLE_MIN - 6, rows: bandRows }
+    const { state, offset } = bandSprite()
+    const isImage = wantsImage() && (await loadPng($, activeSet, state, frameIndex(), 'small')) !== null
+    const tooSmall = isImage ? bandRows < IMAGE_ROWS_MIN || spriteRoom.columns < 8 : e.props.maxRows < sr
+    if (tooSmall || cols < sc + 16) {
       sites.band = undefined
       return (
         <Text wrap="truncate-end">
@@ -659,9 +712,8 @@ export const register: Register = on => {
     }
 
     // Cells get room to stroll; a picture stays put (moving it would mean a redraw per step).
-    const room = wantsImage() ? 0 : Math.max(0, Math.min(WALK_MAX, cols - sc - BUBBLE_MIN - 4))
-    const { state, offset } = bandSprite()
-    const sprite = await drawSprite($, { Raster, Image }, 'band', e.requestId, 'small', sc + room, state, Math.min(offset, room))
+    const room = isImage ? 0 : Math.max(0, Math.min(WALK_MAX, cols - sc - BUBBLE_MIN - 4))
+    const sprite = await drawSprite($, { Raster, Image }, 'band', e.requestId, 'small', sc + room, state, Math.min(offset, room), spriteRoom)
     return compact(els, sprite, v, cols, true)
   })
 }
@@ -698,11 +750,11 @@ function bubble({ Box, Text }: TextEls, text: string) {
 function compact({ Box, Text }: TextEls, sprite: Sprite, v: View, cols: number, withHint: boolean) {
   const els = { Box, Text }
   return (
-    <Box flexDirection="row" width={cols} backgroundColor={THEME.surface}>
+    <Box flexDirection="row" width={cols} alignItems="center" backgroundColor={THEME.surface}>
       <Box backgroundColor={THEME.stage} paddingX={1}>
         {sprite}
       </Box>
-      <Box flexDirection="column" justifyContent="center" marginLeft={2} paddingRight={1} flexShrink={1}>
+      <Box flexDirection="column" marginLeft={2} paddingRight={1} flexShrink={1}>
         <Box>
           {chip(els, v)}
           <Text bold color={THEME.accent}>

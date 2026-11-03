@@ -232,7 +232,7 @@ tmux 是在連線時決定外層終端機的功能，所以要 detach（`prefix`
 | 指令 | 作用 |
 |---|---|
 | `/chibi` | 顯示目前設定與說明 |
-| `/chibi auto` | **預設**。寬螢幕（≥144 欄）開右側面板，否則用輸入框上方列 |
+| `/chibi auto` | **預設**。寬螢幕（fullscreen 且 ≥110 欄）開右側面板，否則用輸入框上方列；視窗寬度改變時自動切換 |
 | `/chibi pane` | 強制開面板（手動開啟時任何寬度都可以） |
 | `/chibi band` | 只用輸入框上方列 |
 | `/chibi off` | 不畫圖，只在狀態列顯示文字 |
@@ -271,10 +271,12 @@ tmux 是在連線時決定外層終端機的功能，所以要 detach（`prefix`
 ```
 
 - 上方列空間小，只畫她的上半身（頭到肩膀），臉部比較清楚；側面板畫全身。
+- **原圖模式下大小會跟著視窗變**：側面板依面板寬度放大（保留下方文字與最近紀錄的空間）；上方列約佔終端機高度的 30%（8～18 行）。字元畫模式只有固定兩種尺寸（全身 34×18、半身 22×12），依空間擇一。
+- 圖片是原始 PNG 放大顯示，放得越大會越柔和（不會更清楚）。
 - 閒置 30 秒後上方列自動收起，有新事件再展開。
 - 動畫每次重畫至少間隔 240ms（較快的動作改用跳幀，速度不變）。
 - 動畫時游標或輸入法組字一直閃：終端機沒有開「同步更新」（synchronized output）。tmux 裡尤其常見，見 macOS 的 tmux 說明。
-- 上方列可用高度不足 12 行時，退回一行文字：`✎ Claude 娘 · 工作中 正在改 auth.ts…`。
+- 上方列放不下她時（字元畫不足 12 行、原圖不足 4 行），退回一行文字：`✎ Claude 娘 · 工作中 正在改 auth.ts…`。
 - 非 fullscreen 的終端機上，面板會放在輸入框上方，並自動改用精簡排版。
 
 ### 配色
@@ -342,6 +344,7 @@ claude plugin test plugin         # 執行 plugin/tests 的繪製測試
 | 面板沒開 | 終端機寬度不到 144 欄時，自動模式不會開面板，會改用上方列；可用 `/chibi pane` 強制開啟 |
 | 面板只出現在輸入框上方、不在右側 | 不是 fullscreen 畫面（tmux 預設如此）：執行 `/tui fullscreen`，或設定 `CLAUDE_CODE_NO_FLICKER=1`（見 macOS 的 tmux 說明） |
 | 動畫時游標一直閃、輸入法組字跟著閃 | tmux 沒開同步更新，或 tmux server 早於 3.8：加 `set -as terminal-features ",xterm-256color:sync"`，並確認 `tmux display -p '#{version}'` ≥ 3.8，否則 `tmux kill-server` 重開（見 macOS 的 tmux 說明） |
+| tmux 裡原圖模式偶爾閃一下 | Claude Code 在 tmux 裡每一幀都用同一個圖片 id、分段重傳整張 PNG，這些資料經 tmux 直接轉給終端機、不在同步更新內，換圖途中可能短暫空白。不在 tmux 裡執行 `claude`（例如用 Ghostty 自己的分割視窗）可避免；或改用 `/chibi render cells` |
 | tmux 裡配色偏灰、跟其他終端機差很多 | Claude Code 在 tmux 裡只用 256 色：設定 `CLAUDE_CODE_TMUX_TRUECOLOR=1`（見 macOS 的 tmux 說明） |
 | Mac 上只看到空白、沒有圖 | 終端機不支援圖片，或 tmux 沒設定 passthrough；執行 `/chibi render cells` 改用字元畫，或換 Ghostty |
 | 圖案有細縫或格線 | 終端機用字型畫方塊字元而不是自己繪製；換字型，或調整行距為 1.0 |
