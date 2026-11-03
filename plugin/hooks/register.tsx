@@ -52,11 +52,14 @@ const WALK_EVERY_MS = 40_000 // while working, a stroll across the band this oft
 const WALK_MAX = 16 // columns of room the stroll may use
 const BUBBLE_MIN = 30 // columns the band keeps for the speech bubble
 // A picture scales to the room it has: the band takes this share of the
-// terminal's rows (within the bounds), the dock fills its width and keeps
-// rows for the chip, bubble, stats and a few recent calls.
+// terminal's rows (within the bounds); in the dock it takes at most these
+// shares of the pane's width and height, and keeps rows for the chip,
+// bubble, stats and a few recent calls.
 const BAND_ROWS_SHARE = 0.3
 const BAND_ROWS_MIN = 8
 const BAND_ROWS_MAX = 18
+const DOCK_WIDTH_SHARE = 0.6
+const DOCK_ROWS_SHARE = 0.4
 const DOCK_TEXT_ROWS = 8 // name (2) · bubble (3) · stats (1) · recent heading (2)
 const DOCK_RECENT_MIN = 4
 const IMAGE_ROWS_MIN = 4
@@ -615,7 +618,10 @@ export const register: Register = on => {
     const sc = activeSet.sizes[size].columns
     const bodyRows = e.props.scroll.bodyRows
     const spriteRoom = isDock
-      ? { columns: cols - 2, rows: bodyRows - DOCK_TEXT_ROWS - DOCK_RECENT_MIN }
+      ? {
+          columns: Math.floor(cols * DOCK_WIDTH_SHARE),
+          rows: Math.min(Math.floor(bodyRows * DOCK_ROWS_SHARE), bodyRows - DOCK_TEXT_ROWS - DOCK_RECENT_MIN),
+        }
       : { columns: cols - BUBBLE_MIN - 6, rows: bodyRows } // inline: fit the rows the pane has
     const sprite = await drawSprite($, { Raster, Image }, 'pane', e.requestId, size, sc, shown, 0, spriteRoom)
     const shownRows = sites.pane?.rows ?? spriteRows(activeSet, size)
