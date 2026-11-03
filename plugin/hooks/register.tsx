@@ -194,7 +194,9 @@ type $T = EngineInterface
  */
 function withAngry(set: SheetSet): SpriteSet {
   const durations = [...Array(7).fill(120), 240]
-  return { ...set, states: { ...set.states, angry: { ...set.states.failed, durations } } }
+  const { big, small } = set.states.failed
+  const sample = (frames: string[]) => durations.map((_, i) => frames[Math.floor(i * frames.length / durations.length)]!)
+  return { ...set, states: { ...set.states, angry: { big: sample(big), small: sample(small), durations } } }
 }
 
 /** A click on her: the next reaction in turn, or anger when the clicks come too fast. */
@@ -413,7 +415,7 @@ function nextDelay(): number {
   const state = walk ? (walk.dir > 0 ? 'running-right' : 'running-left') : shown
   const d = activeSet.states[state].durations
   const ms = d[frame % d.length] ?? 150
-  stride = ms < MIN_FRAME_MS ? Math.round(MIN_FRAME_MS / ms) : 1
+  stride = state !== 'failed' && ms < MIN_FRAME_MS ? Math.round(MIN_FRAME_MS / ms) : 1
   return ms * stride
 }
 

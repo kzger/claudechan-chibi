@@ -19,3 +19,9 @@ Claude ちゃん 終端機陪伴 mod（claudechan-chibi）— 素材來源與授
 Twemoji 的 U+1F4A2（💢），© Twitter, Inc. and other contributors，
 授權 CC BY 4.0：https://creativecommons.org/licenses/by/4.0/
 來源：https://github.com/jdecked/twemoji（v15.1.0，assets/72x72/1f4a2.png），已縮小並加上淺色描邊。
+
+CrossPet Claude 失敗動畫改作（CC BY-NC-SA 4.0）：
+- 原畫：CrossPet（lokicorvus），https://github.com/lokicorvus/crosspet
+- 角色源於社群流行的 Claude 娘設定。以本專案 smooth 動作為參考，透過 OpenAI ImageGen 補繪六張抱書反應。
+- 素材：https://github.com/lokicorvus/crosspet/tree/5c64326b6e7fc175eda0360c0bb5c4732541d138/characters/claude
+- 授權：https://github.com/lokicorvus/crosspet/blob/5c64326b6e7fc175eda0360c0bb5c4732541d138/characters/LICENSE.md

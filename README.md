@@ -371,6 +371,10 @@ fi
 
 **點她的圖**：每點一次依序換一種反應與台詞（揮手、點頭、閱讀、寫作、等待），約 1.5 秒後回到原本的動作與台詞；打瞌睡時點她會馬上醒來。只有「等你決定」（權限確認等）時不會被打斷。點擊靠的是疊在圖上的透明區域，需要終端機支援滑鼠回報（Ghostty、kitty、iTerm2、WezTerm 等都可以）。
 
+`failed` 的 Claude 動作參考本專案的 `smooth` 角色，以六張姿勢演出受驚、低頭抱書和回神。角色原畫出自 [CrossPet（lokicorvus）](https://github.com/lokicorvus/crosspet)，改作沿用 CC BY-NC-SA 4.0。
+
+![Claude 失敗動畫](tools/assets/crosspet/claude/gif/failed.gif)
+
 `angry` 的原圖是 `tools/build_angry.py` 用叉腰的姿勢圖 `tools/assets/angry-pose.png`（以原角色為參考另外生成）做成的：往前傾兩次，頭上的 Twemoji 💢（CC BY 4.0，署名見 `plugin/ATTRIBUTION.txt`）一跳一跳。字元畫模式沒有這組幀，生氣時改畫 `failed`。
 
 同時符合多個狀態時，顯示哪一個由 `plugin/hooks/mood.ts` 的 `pickState()` 決定。
@@ -400,7 +404,8 @@ python tools/make_readme_images.py            # 寫到 docs/images/
 ```bash
 # 兩組 Codex v1 精靈圖（1536×1872，8×9 格，每格 192×208）
 python tools/build_frames.py --smooth path/to/smooth.png --classic path/to/classic.png
-# build_frames.py 會清空 plugin/assets/<set>/，之後要重新產生生氣的幀
+# build_frames.py 會清空 plugin/assets/<set>/，之後要重新產生失敗和生氣的幀
+python tools/build_failed.py
 python tools/build_angry.py
 ```
 
