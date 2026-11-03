@@ -230,7 +230,7 @@ Claude Code 偵測到 tmux 時會做兩件事——把顏色降成 256 色（暖
 }
 ```
 
-前提是 tmux 本身已開真彩色（`set -ag terminal-overrides ",xterm-256color:RGB"`）。
+前提是 tmux 本身已開真彩色（`set -ag terminal-overrides ",xterm-256color:RGB"`）。只想切換畫面模式也可以執行 `/tui fullscreen`。`/chibi` 偵測到這兩種情況時會提示。
 
 ### tmux 裡動畫時游標狂閃、輸入法組字跟著閃
 
@@ -242,7 +242,26 @@ set -as terminal-features ",xterm-256color:sync"
 
 tmux 是在連線時決定外層終端機的功能，所以要 detach（`prefix` `d`）再 `tmux attach`，或 `tmux kill-server` 重開。用 `tmux display -p '#{client_termfeatures}'` 確認清單裡有 `sync`。
 
-另外需要 **tmux server 3.8 以上**：3.7 以前的 tmux 自己重畫時，會在同步區塊之外先隱藏游標，所以就算有 `sync` 還是會閃。注意升級 tmux 後，舊的 server 會繼續執行舊版，要 `tmux kill-server` 重開才會換成新版。用 `tmux display -p '#{version}'` 看的是 **server** 的版本（`tmux -V` 只是程式本身的版本）。只想切換畫面模式也可以執行 `/tui fullscreen`。`/chibi` 偵測到這兩種情況時會提示。
+另外需要 **tmux server 3.8 以上**：3.7 以前的 tmux 自己重畫時，會在同步區塊之外先隱藏游標，所以就算有 `sync` 還是會閃。注意升級 tmux 後，舊的 server 會繼續執行舊版，要 `tmux kill-server` 重開才會換成新版。用 `tmux display -p '#{version}'` 看的是 **server** 的版本（`tmux -V` 只是程式本身的版本）。
+
+### herdr（取代 tmux）
+
+[herdr](https://herdr.dev) 是專為 coding agent 設計的終端機多工器，跟 tmux 一樣能分割視窗、在背景保留 session。它自己解讀 Kitty 圖片協定再交給外層終端機，所以原圖模式**不會有 tmux 那種換圖時的閃爍**。
+
+但 Claude Code 在 herdr 裡偵測不到圖片支援（herdr 回報的終端機名稱是 `libghostty`，Claude Code 只認得 `kitty` / `ghostty`），會改用字元畫。要顯示原圖，在 `~/.zshrc` 加上：
+
+```zsh
+# Claude Code cannot detect image support inside herdr (it reports "libghostty"),
+# but herdr renders Kitty graphics: let Claude Code draw pictures there only.
+if [[ "$TERM_PROGRAM" == "herdr" ]]; then
+  export CLAUDE_CODE_FORCE_TERMINAL_IMAGES=1
+fi
+```
+
+- 只在 herdr 的 pane 裡生效（herdr 會設 `TERM_PROGRAM=herdr`）。**不要**把這個變數寫進 `settings.json`：在不支援圖片的終端機或 tmux 裡，她會變成一塊空白，而且不會自動退回字元畫。
+- 外層終端機要能畫圖（Ghostty、kitty 等）。
+- 加完後要開**新的** pane，或在現有 pane 執行 `exec zsh`：herdr 的背景服務會保留 pane，重開 herdr 時舊 pane 帶的是舊環境。
+- 確認：`echo $CLAUDE_CODE_FORCE_TERMINAL_IMAGES` 顯示 `1`，在 Claude Code 執行 `/chibi render auto` 後，`/chibi` 顯示「面板：原圖」。
 
 ---
 
@@ -370,7 +389,8 @@ claude plugin test plugin         # 執行 plugin/tests 的繪製測試
 | 面板沒開 | 終端機寬度不到 144 欄時，自動模式不會開面板，會改用上方列；可用 `/chibi pane` 強制開啟 |
 | 面板只出現在輸入框上方、不在右側 | 不是 fullscreen 畫面（tmux 預設如此）：執行 `/tui fullscreen`，或設定 `CLAUDE_CODE_NO_FLICKER=1`（見 macOS 的 tmux 說明） |
 | 動畫時游標一直閃、輸入法組字跟著閃 | tmux 沒開同步更新，或 tmux server 早於 3.8：加 `set -as terminal-features ",xterm-256color:sync"`，並確認 `tmux display -p '#{version}'` ≥ 3.8，否則 `tmux kill-server` 重開（見 macOS 的 tmux 說明） |
-| tmux 裡原圖模式偶爾閃一下 | Claude Code 在 tmux 裡每一幀都用同一個圖片 id、分段重傳整張 PNG，這些資料經 tmux 直接轉給終端機、不在同步更新內，換圖途中可能短暫空白。不在 tmux 裡執行 `claude`（例如用 Ghostty 自己的分割視窗）可避免；或改用 `/chibi render cells` |
+| herdr 裡只有字元畫、沒有原圖 | Claude Code 偵測不到 herdr 的圖片支援：見 macOS 的 herdr 說明，設定 `CLAUDE_CODE_FORCE_TERMINAL_IMAGES` |
+| tmux 裡原圖模式偶爾閃一下 | Claude Code 在 tmux 裡每一幀都用同一個圖片 id、分段重傳整張 PNG，這些資料經 tmux 直接轉給終端機、不在同步更新內，換圖途中可能短暫空白。不在 tmux 裡執行 `claude`（直接用 Ghostty，或改用 herdr）可避免；或改用 `/chibi render cells` |
 | tmux 裡配色偏灰、跟其他終端機差很多 | Claude Code 在 tmux 裡只用 256 色：設定 `CLAUDE_CODE_TMUX_TRUECOLOR=1`（見 macOS 的 tmux 說明） |
 | Mac 上只看到空白、沒有圖 | 終端機不支援圖片，或 tmux 沒設定 passthrough；執行 `/chibi render cells` 改用字元畫，或換 Ghostty |
 | 圖案有細縫或格線 | 終端機用字型畫方塊字元而不是自己繪製；換字型，或調整行距為 1.0 |
