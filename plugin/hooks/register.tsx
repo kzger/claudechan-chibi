@@ -29,6 +29,13 @@ const THEME = {
   onChip: '#1C1714', // text on a coloured chip
 }
 const hex = (c: string) => parseInt(c.slice(1), 16)
+/**
+ * A colour as a Raster paints it: the engine draws Raster cells in 4 bits a
+ * channel (each to the nearest multiple of 0x11), so a Box behind cells takes
+ * the same colour or shows a seam around them. Pictures and text keep 24 bits.
+ */
+const cellColor = (c: string) =>
+  '#' + [1, 3, 5].map(i => (Math.round(parseInt(c.slice(i, i + 2), 16) / 17) * 17).toString(16).padStart(2, '0')).join('')
 const ACCENT = THEME.accent
 /** Each state's chip colour. */
 const CHIP: Record<StateName, string> = {
@@ -159,7 +166,8 @@ let shown: StateName = 'idle'
 let frame = 0
 let stride = 1 // frames each blit moves on
 let isDozing = false
-let walk: { dir: 1 | -1; offset: number; room: number } | null = null
+/** The stroll: from her resting place in the middle to the right end, the left end, and back. */
+let walk: { dir: 1 | -1; offset: number; room: number; hasTurned: boolean } | null = null
 let lastWalkAt = 0
 let lastPanePoll = 0
 let activeSet: SpriteSet = SETS.smooth
@@ -333,6 +341,11 @@ async function loadPng($: $T, set: SpriteSet, state: StateName, f: number, size:
 type SpriteElements = Pick<Elements['terminal'], 'Raster' | 'Image'>
 
 /** The largest box of cells within `maxColumns` x `maxRows` that keeps the picture's aspect. */
+/** The backdrop behind a site's sprite: the stage, as the Raster paints it where the sprite is cells. */
+function stageOf(slot: 'pane' | 'band'): string {
+  return sites[slot]?.kind === 'cells' ? cellColor(THEME.stage) : THEME.stage
+}
+
 function imageBox(size: SizeName, maxColumns: number, maxRows: number): { columns: number; rows: number } {
   const base = activeSet.imageSizes[size]
   const perRow = base.columns / base.rows // columns per row of the picture
@@ -367,7 +380,7 @@ async function drawSprite(
     }
   }
   const rows = spriteRows(activeSet, size)
-  const fill = hex(THEME.stage)
+  const fill = hex(cellColor(THEME.stage))
   sites[slot] = { kind: 'cells', requestId, size, width, rows, fill }
   const cells = cellsOf(activeSet, state, size, frameIndex(), width, offset, fill)
   return <Raster key="sprite" columns={width} rows={rows} cells={cells} />
@@ -378,10 +391,13 @@ async function setView($: $T, patch: Partial<View>) {
 }
 
 /** What the band draws right now: the walk overrides the mood while it lasts. */
-function bandSprite(): { state: StateName; offset: number } {
-  if (walk) return { state: walk.dir > 0 ? 'running-right' : 'running-left', offset: walk.offset }
-  return { state: shown, offset: 0 }
+function bandSprite(room: number): { state: StateName; offset: number } {
+  if (walk) return { state: walk.dir > 0 ? 'running-right' : 'running-left', offset: Math.min(walk.offset, room) }
+  return { state: shown, offset: restOffset(room) }
 }
+
+/** Cells keep room beside her for the stroll: at rest she stands in the middle of it. */
+const restOffset = (room: number) => Math.floor(room / 2)
 
 function frameIndex(): number {
   return isDozing ? DOZE_FRAME : frame
@@ -403,7 +419,7 @@ async function blitAll($: $T) {
   for (const name of ['pane', 'band'] as const) {
     const site = sites[name]
     if (!site) continue
-    const { state, offset } = name === 'band' && site.kind === 'cells' ? bandSprite() : { state: shown, offset: 0 }
+    const { state, offset } = name === 'band' && site.kind === 'cells' ? bandSprite(site.width - activeSet.sizes[site.size].columns) : { state: shown, offset: 0 }
     const where = { requestId: site.requestId, key: 'sprite', columns: site.width, rows: site.rows }
     let r
     if (site.kind === 'image') {
@@ -468,13 +484,20 @@ async function tick($: $T) {
   if (walk) {
     walk.offset += walk.dir
     if (walk.offset >= walk.room) walk.dir = -1
-    if (walk.offset <= 0 && walk.dir < 0) {
-      walk = null
+    if (walk.offset <= 0) {
+      walk.dir = 1
+      walk.hasTurned = true
+    }
+    if (walk.hasTurned && walk.dir > 0 && walk.offset >= restOffset(walk.room)) {
+      walk = null // back in the middle
       lastWalkAt = now
     }
   } else if (shown === 'running' && band?.kind === 'cells' && band.width - activeSet.sizes.small.columns >= 8) {
     if (lastWalkAt === 0) lastWalkAt = now
-    if (now - lastWalkAt > WALK_EVERY_MS) walk = { dir: 1, offset: 0, room: band.width - activeSet.sizes.small.columns }
+    if (now - lastWalkAt > WALK_EVERY_MS) {
+      const room = band.width - activeSet.sizes.small.columns
+      walk = { dir: 1, offset: restOffset(room), room, hasTurned: false }
+    }
   }
 
   frame += stride
@@ -721,13 +744,13 @@ export const register: Register = on => {
     const sprite = pokeable({ Box, Client }, await drawSprite($, { Raster, Image }, 'pane', e.requestId, size, sc, shown, 0, spriteRoom), 'pane')
     const shownRows = sites.pane?.rows ?? spriteRows(activeSet, size)
 
-    if (!isDock) return compact(els, sprite, v, cols, false) // seated inline above the prompt
+    if (!isDock) return compact(els, sprite, v, cols, false, stageOf('pane')) // seated inline above the prompt
 
     const room = Math.max(0, bodyRows - shownRows - DOCK_TEXT_ROWS)
     const recent = v.recent.slice(-room)
     return (
       <Box flexDirection="column">
-        <Box backgroundColor={THEME.stage} justifyContent="center">
+        <Box backgroundColor={stageOf('pane')} justifyContent="center">
           {sprite}
         </Box>
         <Box paddingX={1} marginTop={1}>
@@ -799,7 +822,7 @@ export const register: Register = on => {
     const bandRows = Math.min(e.props.maxRows, Math.max(BAND_ROWS_MIN, Math.min(BAND_ROWS_MAX, Math.round(termRows * BAND_ROWS_SHARE))))
     const inner = cols - BAND_FRAME // inside the frame
     const spriteRoom = { columns: inner - BUBBLE_MIN - 6, rows: bandRows - BAND_FRAME }
-    const { state, offset } = bandSprite()
+    const { state } = bandSprite(0)
     const isImage = wantsImage() && (await loadPng($, activeSet, state, frameIndex(), 'small')) !== null
     const tooSmall = isImage ? spriteRoom.rows < IMAGE_ROWS_MIN || spriteRoom.columns < 8 : e.props.maxRows < sr + BAND_FRAME
 
@@ -809,7 +832,7 @@ export const register: Register = on => {
       const face = pokeable({ Box, Client }, await drawSprite($, { Raster, Image }, 'band', e.requestId, 'small', sc, state, 0, { columns: 12, rows: bandRows }), 'band')
       return (
         <Box flexDirection="row" width={cols} alignItems="center" backgroundColor={THEME.surface}>
-          <Box backgroundColor={THEME.stage}>{face}</Box>
+          <Box backgroundColor={stageOf('band')}>{face}</Box>
           <Box marginLeft={1} flexShrink={1}>
             <Text wrap="truncate-end">
               {chip(els, v)}
@@ -833,11 +856,12 @@ export const register: Register = on => {
 
     // Cells get room to stroll; a picture stays put (moving it would mean a redraw per step).
     const room = isImage ? 0 : Math.max(0, Math.min(WALK_MAX, inner - sc - BUBBLE_MIN - 4))
-    const sprite = pokeable({ Box, Client }, await drawSprite($, { Raster, Image }, 'band', e.requestId, 'small', sc + room, state, Math.min(offset, room), spriteRoom), 'band')
+    const { offset } = bandSprite(room)
+    const sprite = pokeable({ Box, Client }, await drawSprite($, { Raster, Image }, 'band', e.requestId, 'small', sc + room, state, offset, spriteRoom), 'band')
     // Framed like the pane seated above the prompt.
     return (
       <Box borderStyle="round" borderColor={THEME.muted} width={cols} backgroundColor={THEME.surface}>
-        {compact(els, sprite, v, inner, true)}
+        {compact(els, sprite, v, inner, true, stageOf('band'))}
       </Box>
     )
   })
@@ -889,11 +913,11 @@ function pokeable({ Box, Client }: Pick<Elements['terminal'], 'Box' | 'Client'>,
 }
 
 /** Sprite on its stage, beside the chip, the bubble and (in the band) a hint. */
-function compact({ Box, Text }: TextEls, sprite: RenderElement, v: View, cols: number, withHint: boolean) {
+function compact({ Box, Text }: TextEls, sprite: RenderElement, v: View, cols: number, withHint: boolean, stage: string) {
   const els = { Box, Text }
   return (
     <Box flexDirection="row" width={cols} alignItems="center" backgroundColor={THEME.surface}>
-      <Box backgroundColor={THEME.stage} paddingX={1}>
+      <Box backgroundColor={stage} paddingX={1}>
         {sprite}
       </Box>
       <Box flexDirection="column" marginLeft={2} paddingRight={1} flexShrink={1}>

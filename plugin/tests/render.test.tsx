@@ -216,3 +216,45 @@ test('a click wakes her at once, not at the dozing clock’s next tick', async (
   expect(await ui.find({ type: 'Text', text: /你好！/ })).toBeDefined()
   await ui.unmount()
 })
+
+/** Every backgroundColor in a drawn tree, and its Rasters. */
+function walkTree(node: unknown, out: { bgs: string[]; rasters: { columns: number; rows: number; cells: string }[] }) {
+  if (node === null || typeof node !== 'object') return out
+  const n = node as { type?: string; props?: Record<string, unknown>; children?: unknown[] }
+  const props = n.props ?? {}
+  if (typeof props.backgroundColor === 'string') out.bgs.push(props.backgroundColor)
+  if (n.type === 'Raster') out.rasters.push(props as never)
+  const kids = (n.children ?? props.children ?? []) as unknown
+  for (const k of Array.isArray(kids) ? kids : [kids]) walkTree(k, out)
+  return out
+}
+
+test('cells: the stage takes the Raster’s colour, and she stands in the middle of the band', async ($, on) => {
+  engine(on) // no fs.read: no picture, so cells
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+  const ui = await $.ui.mount({ ...BAND, props: { ...BAND.props, maxRows: 20, bodyColumns: 120 }, surface: 'terminal' })
+  const { bgs, rasters } = walkTree(await ui.drawn(), { bgs: [], rasters: [] })
+  expect(bgs).toContain('#222222') // #26201B as a Raster paints it
+  expect(bgs).not.toContain('#26201B')
+  const r = rasters[0]!
+  const words = new Uint32Array(Uint8Array.from(atob(r.cells), c => c.charCodeAt(0)).buffer)
+  const blankLeft = Math.min(
+    ...Array.from({ length: r.rows }, (_, y) => {
+      let x = 0
+      while (x < r.columns && words[(y * r.columns + x) * 3] === 0x20) x++
+      return x
+    }),
+  )
+  expect(blankLeft).toBeGreaterThanOrEqual(6) // half the stroll's room lies to her left
+  await ui.unmount()
+})
+
+test('pictures keep the stage colour as it is', async ($, on) => {
+  engine(on)
+  on('fs.read', () => ({ value: { base64: PNG } }))
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+  const { bgs } = walkTree(await ui.drawn(), { bgs: [], rasters: [] })
+  expect(bgs).toContain('#26201B')
+  await ui.unmount()
+})
