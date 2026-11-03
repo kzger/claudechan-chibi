@@ -5,7 +5,7 @@ const PANE = {
   component: 'Pane',
   requestId: 'chibi',
   props: {
-    title: 'Claude 娘',
+    title: 'Claude ちゃん',
     isFocused: false,
     bodyColumns: 52,
     placement: 'dock',
@@ -66,7 +66,7 @@ test('a band with too little room falls back to one line', async ($, on) => {
 
   const ui = await $.ui.mount({ ...BAND, props: { ...BAND.props, maxRows: 6 }, surface: 'terminal' })
   expect(await ui.find({ type: 'Raster', key: 'sprite' })).toBeUndefined()
-  expect(await ui.find({ type: 'Text', text: /Claude 娘/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /Claude ちゃん/ })).toBeDefined()
   await ui.unmount()
 })
 
@@ -122,7 +122,7 @@ test('a short band keeps her face beside one line', async ($, on) => {
   const img = await ui.find({ type: 'Image', key: 'sprite' })
   expect(img).toBeDefined()
   expect(Number(img?.props.rows)).toBe(3)
-  expect(await ui.find({ type: 'Text', text: /Claude 娘/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /Claude ちゃん/ })).toBeDefined()
   await ui.unmount()
 
   const one = await $.ui.mount({ ...BAND, props: { ...BAND.props, maxRows: 1 }, surface: 'terminal' })

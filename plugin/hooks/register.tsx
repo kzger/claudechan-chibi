@@ -10,7 +10,7 @@ import { makeCellCache, spriteRows, type SizeName, type SpriteSet, type StateNam
 // ─── constants ──────────────────────────────────────────────────────────────
 
 const PANE = 'chibi'
-const PANE_TITLE = 'Claude 娘'
+const PANE_TITLE = 'Claude ちゃん'
 const PANE_COLUMNS = 52
 // Theme: a warm "café" dark palette taken from her own colours (hair orange,
 // cream dress, brown book). Every text/background pair is >= 5.5:1 (WCAG AA),
@@ -289,7 +289,7 @@ async function drawSprite(
     if (png !== null) {
       const { columns, rows } = imageBox(size, room.columns, room.rows)
       sites[slot] = { kind: 'image', requestId, size, width: columns, rows, fill: hex(THEME.stage) }
-      const alt = renderPref === 'image' ? 'Claude 娘（這個終端機不支援圖片）' : ' '
+      const alt = renderPref === 'image' ? 'Claude ちゃん（這個終端機不支援圖片）' : ' '
       return <Image key="sprite" source={{ png }} columns={columns} rows={rows} alt={alt} />
     }
   }
@@ -373,7 +373,7 @@ async function tick($: $T) {
       walk = null
     }
     await setView($, { state: want, isDozing: dozing, ...(dozing ? { bubble: 'zzz…' } : {}) })
-    if (mode === 'off') $.ui.status(`${ICON[want]} Claude 娘：${dozing ? '打瞌睡' : TITLE[want]}`)
+    if (mode === 'off') $.ui.status(`${ICON[want]} Claude ちゃん：${dozing ? '打瞌睡' : TITLE[want]}`)
     return // the redraw paints this frame
   }
   if (isDozing) return
@@ -423,7 +423,7 @@ export const register: Register = on => {
 
     await $.command.register({
       name: 'chibi',
-      description: 'Claude 娘：auto | pane | band | off，set smooth | classic，render auto | image | cells',
+      description: 'Claude ちゃん：auto | pane | band | off，set smooth | classic，render auto | image | cells',
       argumentHint: '[auto|pane|band|off|set <smooth|classic>|render <auto|image|cells>]',
       immediate: true,
     })
@@ -545,12 +545,12 @@ export const register: Register = on => {
       await update($, imageFailed, () => false)
       await save({ ...p, render: arg })
       const label = { auto: '自動（能畫圖就用原圖，否則用字元）', image: '原圖（kitty / Ghostty / iTerm2）', cells: '字元畫' }[arg]
-      return { text: `Claude 娘繪製方式：${label}` }
+      return { text: `Claude ちゃん繪製方式：${label}` }
     }
     if (word === 'set') {
       if (arg !== 'smooth' && arg !== 'classic') return { text: '用法：/chibi set smooth | classic' }
       await save({ ...p, set: arg })
-      return { text: `Claude 娘圖庫：${arg === 'smooth' ? '流暢版 (native-smooth)' : '經典版 (claude-chibi)'}` }
+      return { text: `Claude ちゃん圖庫：${arg === 'smooth' ? '流暢版 (native-smooth)' : '經典版 (claude-chibi)'}` }
     }
     if (word === 'auto' || word === 'pane' || word === 'band' || word === 'off') {
       await save({ ...p, mode: word })
@@ -561,13 +561,13 @@ export const register: Register = on => {
       } else {
         await $.ui.close({ id: PANE })
       }
-      if (word === 'off') $.ui.status(`${ICON[shown]} Claude 娘：${TITLE[shown]}`)
+      if (word === 'off') $.ui.status(`${ICON[shown]} Claude ちゃん：${TITLE[shown]}`)
       const label = { auto: '自動（寬用面板、窄用上方列）', pane: '側面板', band: '輸入框上方列', off: '只用狀態列' }[word]
-      return { text: [`Claude 娘顯示方式：${label}`, ...(word === 'auto' || word === 'pane' ? hints : [])].join('\n') }
+      return { text: [`Claude ちゃん顯示方式：${label}`, ...(word === 'auto' || word === 'pane' ? hints : [])].join('\n') }
     }
     return {
       text: [
-        `Claude 娘 — 顯示：${p.mode}，圖庫：${p.set}，繪製：${p.render}${p.render === 'auto' ? (imageBroken ? '（字元）' : '（原圖）') : ''}，狀態：${TITLE[shown]}`,
+        `Claude ちゃん — 顯示：${p.mode}，圖庫：${p.set}，繪製：${p.render}${p.render === 'auto' ? (imageBroken ? '（字元）' : '（原圖）') : ''}，狀態：${TITLE[shown]}`,
         `目前畫面 — 面板：${kindLabel(sites.pane)}，上方列：${kindLabel(sites.band)}`,
         '/chibi auto | pane | band | off     切換顯示方式',
         '/chibi set smooth | classic         切換圖庫',
@@ -581,7 +581,7 @@ export const register: Register = on => {
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     if (e.surface !== 'terminal') {
       const { Text } = $.ui.resolve(e)
-      return <Text dimColor>Claude 娘只畫在終端機上。</Text>
+      return <Text dimColor>Claude ちゃん只畫在終端機上。</Text>
     }
     const { Box, Text, Raster, Image } = $.ui.resolve(e)
     const els = { Box, Text }
@@ -616,7 +616,7 @@ export const register: Register = on => {
         <Box paddingX={1} marginTop={1}>
           {chip(els, v)}
           <Text bold color={THEME.accent}>
-            {'  '}Claude 娘
+            {'  '}Claude ちゃん
           </Text>
         </Box>
         <Box paddingX={1}>{bubble(els, v.bubble)}</Box>
@@ -694,7 +694,7 @@ export const register: Register = on => {
           <Box marginLeft={1} flexShrink={1}>
             <Text wrap="truncate-end">
               {chip(els, v)}
-              <Text bold color={THEME.accent}> Claude 娘</Text>
+              <Text bold color={THEME.accent}> Claude ちゃん</Text>
               <Text color={THEME.muted}> {v.bubble}</Text>
             </Text>
           </Box>
@@ -706,7 +706,7 @@ export const register: Register = on => {
       return (
         <Text wrap="truncate-end">
           {chip(els, v)}
-          <Text bold color={THEME.accent}> Claude 娘</Text>
+          <Text bold color={THEME.accent}> Claude ちゃん</Text>
           <Text color={THEME.muted}> {v.bubble}</Text>
         </Text>
       )
@@ -759,7 +759,7 @@ function compact({ Box, Text }: TextEls, sprite: Sprite, v: View, cols: number, 
         <Box>
           {chip(els, v)}
           <Text bold color={THEME.accent}>
-            {'  '}Claude 娘
+            {'  '}Claude ちゃん
           </Text>
         </Box>
         {bubble(els, v.bubble)}

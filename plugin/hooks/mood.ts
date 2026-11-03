@@ -25,7 +25,7 @@ export type Flags = {
 }
 
 /**
- * Which animation Claude 娘 plays right now. Called on every frame: pure and cheap.
+ * Which animation Claude ちゃん plays right now. Called on every frame: pure and cheap.
  *
  * The Codex app's order: waiting > failed > review > running > idle.
  * The two one-shots Codex has no task state for slot in where they can be seen:

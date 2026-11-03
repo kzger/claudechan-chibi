@@ -1,6 +1,6 @@
 {
   "name": "chibi-local",
-  "description": "Local marketplace for the Claude 娘 terminal companion mod",
+  "description": "Local marketplace for the Claude ちゃん terminal companion mod",
   "owner": { "name": "kzger" },
-  "plugins": [{ "name": "chibi-companion", "source": "./plugin", "description": "Claude 娘 Q 版動畫陪伴（終端機）" }]
+  "plugins": [{ "name": "chibi-companion", "source": "./plugin", "description": "Claude ちゃん Q 版動畫陪伴（終端機）" }]
 }
