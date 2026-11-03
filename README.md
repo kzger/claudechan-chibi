@@ -3,6 +3,25 @@
 讓 Q 版 Claude ちゃん住進 Claude Code 的終端機介面。她會依 Claude 正在做的事切換 9 種動畫：讀檔、改檔、等你核准、出錯、完成……
 寬螢幕時她坐在右側面板，窄螢幕時改站在輸入框上方。
 
+<p align="center">
+  <img src="docs/images/pane.gif" alt="寬螢幕：右側面板（示意圖）" width="640"><br>
+  <sub>寬螢幕：停靠在對話右側的面板（示意圖）</sub>
+</p>
+
+<p align="center">
+  <img src="docs/images/band.gif" alt="窄螢幕：輸入框上方的面板（示意圖）" width="560"><br>
+  <sub>窄螢幕：輸入框上方的面板，只畫上半身（示意圖）</sub>
+</p>
+
+<details>
+<summary><b>9 種動畫一覽</b></summary>
+
+<p align="center"><img src="docs/images/states.gif" alt="9 種動畫" width="470"></p>
+
+</details>
+
+> 以上為依 mod 的版面與配色繪製的示意圖（原圖模式），實際外觀依終端機與視窗大小而定。
+
 圖像使用 Codex 寵物的兩組精靈圖（流暢版 / 經典版），有兩種繪製方式，會自動選擇：
 
 | 繪製方式 | 終端機 | 畫質 |
@@ -321,6 +340,12 @@ tmux 是在連線時決定外層終端機的功能，所以要 detach（`prefix`
 | 動畫尺寸、色數、換圖庫 | `tools/build_frames.py` 的 `SIZES`（字元畫）、`IMAGE_ROWS`（原圖）、`CROP`（上方列的上半身裁切），改完重新產生 |
 | 配色 | `plugin/hooks/register.tsx` 的 `THEME` |
 
+重新產生 README 的示意圖（需要 Python 3 + Pillow，以及含繁中與日文假名的字型，macOS 內建的 PingFang 即可）：
+
+```bash
+python tools/make_readme_images.py            # 寫到 docs/images/
+```
+
 重新產生動畫幀（需要 Python 3 + Pillow + NumPy）：
 
 ```bash
@@ -373,6 +398,8 @@ claude-chibi-cli/
 │  ├─ types/index.d.ts               $.state 型別契約
 │  └─ tests/render.test.tsx          繪製測試
 ├─ tools/build_frames.py             精靈圖 → 動畫幀轉換
+├─ tools/make_readme_images.py       README 示意圖產生器
+├─ docs/images/                      README 的示意 GIF
 ├─ install.ps1 / install.sh          安裝、更新、移除
 ├─ ATTRIBUTION.txt                   素材來源與授權
 └─ README.md
