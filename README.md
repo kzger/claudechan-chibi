@@ -357,7 +357,7 @@ fi
 
 **點她的圖**：每點一次依序換一種反應與台詞（揮手、點頭、閱讀、寫作、等待），約 1.5 秒後回到原本的動作與台詞。只有「等你決定」（權限確認等）時不會被打斷。點擊靠的是疊在圖上的透明區域，需要終端機支援滑鼠回報（Ghostty、kitty、iTerm2、WezTerm 等都可以）。
 
-`angry` 的原圖是 `tools/build_angry.py` 用 `failed` 的幀加上 💢 符號與左右晃動做成的（Codex 的精靈圖沒有生氣的動作）；字元畫模式沒有這組幀，生氣時改畫 `failed`。
+`angry` 的原圖是 `tools/build_angry.py` 用 `failed` 睜眼嘟嘴的幀做成的：身體往前傾、跺腳，頭上加 Twemoji 的 💢（CC BY 4.0，署名見 `plugin/ATTRIBUTION.txt`）。Codex 的精靈圖沒有生氣的動作，所以沒有叉腰；字元畫模式沒有這組幀，生氣時改畫 `failed`。
 
 同時符合多個狀態時，顯示哪一個由 `plugin/hooks/mood.ts` 的 `pickState()` 決定。
 
@@ -371,7 +371,7 @@ fi
 | 對話泡泡文字、各工具的描述 | `plugin/hooks/register.tsx` → `describeTool()`、`TITLE` |
 | 收起、打瞌睡、散步的時間 | `plugin/hooks/register.tsx` 開頭的常數 |
 | 點擊的反應、台詞、生氣的門檻 | `plugin/hooks/register.tsx` → `POKES`、`ANGRY_LINES`、`POKE_ANGRY_AT`、`POKE_WINDOW_MS` |
-| 生氣動畫的 💢 位置、大小、晃動 | `tools/build_angry.py`，改完執行 `uv run --with pillow --with numpy python tools/build_angry.py` |
+| 生氣動畫的 💢 位置、大小、前傾與跺腳 | `tools/build_angry.py`，改完執行 `uv run --with pillow --with numpy python tools/build_angry.py` |
 | 動畫尺寸、色數、換圖庫 | `tools/build_frames.py` 的 `SIZES`（字元畫）、`IMAGE_ROWS`（原圖）、`CROP`（上方列的上半身裁切），改完重新產生 |
 | 配色 | `plugin/hooks/register.tsx` 的 `THEME` |
 
