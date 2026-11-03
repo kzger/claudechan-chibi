@@ -212,6 +212,16 @@ async function screenHints($: $T, isFullscreen: boolean): Promise<string[]> {
   return hints
 }
 
+/**
+ * The pane as opened: docked it is PANE_COLUMNS wide; seated inline above the
+ * prompt it asks for the rows the bust takes plus the frame's two, so the
+ * picture is not cut off at the bottom.
+ */
+function paneArgs() {
+  const rows = Math.max(activeSet.imageSizes.small.rows, spriteRows(activeSet, 'small')) + 2
+  return { id: PANE, title: PANE_TITLE, columns: PANE_COLUMNS, rows, backgroundColor: THEME.surface }
+}
+
 const kindLabel = (site?: Site) => (site === undefined ? '未顯示' : site.kind === 'image' ? '原圖' : '字元')
 
 /** Real pixels unless the person chose cells, or this terminal showed it cannot draw them. */
@@ -414,7 +424,7 @@ export const register: Register = on => {
     flags = { ...flags, now, greetUntil: now + oneShotMs('waving') }
     await setView($, { bubble: '嗨！今天要做什麼？', isBandOpen: true })
 
-    if (p.mode === 'auto' || p.mode === 'pane') void $.ui.open({ id: PANE, title: PANE_TITLE, columns: PANE_COLUMNS, backgroundColor: THEME.surface })
+    if (p.mode === 'auto' || p.mode === 'pane') void $.ui.open(paneArgs())
     startClock($)
     return started
   })
@@ -522,7 +532,7 @@ export const register: Register = on => {
     if (word === 'auto' || word === 'pane' || word === 'band' || word === 'off') {
       await save({ ...p, mode: word })
       if (word === 'auto' || word === 'pane') {
-        const opened = await $.ui.open({ id: PANE, title: PANE_TITLE, columns: PANE_COLUMNS, backgroundColor: THEME.surface })
+        const opened = await $.ui.open(paneArgs())
         if (!opened.isPlaced && word === 'pane')
           return { text: [`面板還沒放上：${opened.reason ?? '畫面太窄'}`, ...hints].join('\n') }
       } else {

@@ -50,6 +50,10 @@ IMAGE_ROWS = {"big": 14, "small": 11}
 # The band is too small for a full figure: it shows head and shoulders instead,
 # as fractions of the full crop (left, top, right, bottom).
 CROP = {"big": (0.0, 0.0, 1.0, 1.0), "small": (0.15, 0.0, 0.85, 0.68)}
+# The bust slides down to each state's own top of head (less this many pixels), so a
+# pose that stands lower (idle) is not drawn under a band of empty space kept for the
+# highest one (jumping). Its size stays the same, so every state fills the same box.
+BUST_MARGIN = 1
 CELL_ASPECT = 2.0  # a terminal cell is about twice as tall as it is wide
 PALETTE_COLORS = 255
 ALPHA_CUTOFF = 110
@@ -86,6 +90,17 @@ def sub_box(bbox, size: str):
     l, t, r, b = CROP[size]
     w, h = bbox[2] - bbox[0], bbox[3] - bbox[1]
     return (bbox[0] + round(w * l), bbox[1] + round(h * t), bbox[0] + round(w * r), bbox[1] + round(h * b))
+
+
+def state_box(bbox, size: str, frames: list[Image.Image]):
+    """sub_box, with the bust moved down to where this state's head begins."""
+    box = sub_box(bbox, size)
+    if size != "small":
+        return box
+    tops = [f.getbbox()[1] for f in frames if f.getbbox()]
+    shift = max(0, min(tops, default=box[1]) - BUST_MARGIN - box[1])
+    shift = min(shift, bbox[3] - box[3])  # never past the feet
+    return (box[0], box[1] + shift, box[2], box[3] + shift)
 
 
 def quad_pixels(frame: Image.Image, bbox, cols: int, rows: int) -> np.ndarray:
@@ -145,7 +160,7 @@ def build_set(name: str, src: Path) -> str:
     # 1. character cells
     cells = {
         size: {
-            st: [best_cells(quad_pixels(f, sub_box(bbox, size), cols, rows), cols, rows) for f in fs]
+            st: [best_cells(quad_pixels(f, state_box(bbox, size, fs), cols, rows), cols, rows) for f in fs]
             for st, fs in frames.items()
         }
         for size, (cols, rows) in SIZES.items()
@@ -179,7 +194,7 @@ def build_set(name: str, src: Path) -> str:
         (asset_dir / st).mkdir(parents=True, exist_ok=True)
         for i, f in enumerate(fs):
             f.crop(sub_box(bbox, "big")).save(asset_dir / st / f"{i}.png", optimize=True)
-            f.crop(sub_box(bbox, "small")).save(asset_dir / st / f"{i}-bust.png", optimize=True)
+            f.crop(state_box(bbox, "small", fs)).save(asset_dir / st / f"{i}-bust.png", optimize=True)
     image_sizes = {}
     for size, (cols, rows) in SIZES.items():
         box = sub_box(bbox, size)
