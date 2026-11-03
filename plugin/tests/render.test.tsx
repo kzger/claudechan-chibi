@@ -92,7 +92,7 @@ test('/chibi names the tmux settings that keep colours and the dock', async ($, 
 
 const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
 
-test('the picture grows with the room: a wider dock, a taller terminal', async ($, on) => {
+test('the picture grows with the room: a wider dock; the band stops at its cap', async ($, on) => {
   engine(on)
   on('fs.read', () => ({ value: { base64: PNG } }))
   await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
@@ -107,10 +107,9 @@ test('the picture grows with the room: a wider dock, a taller terminal', async (
   const wideDock = await rowsOf({ ...PANE, props: { ...PANE.props, bodyColumns: 70 }, surface: 'terminal' })
   expect(wideDock).toBeGreaterThan(narrowDock)
 
-  const shortBand = await rowsOf({ ...BAND, viewport: { columns: 95, rows: 30 }, surface: 'terminal' })
+  // The band's picture stops growing at its cap: 7 rows, frame included.
   const tallBand = await rowsOf({ ...BAND, viewport: { columns: 95, rows: 60 }, props: { ...BAND.props, maxRows: 30 }, surface: 'terminal' })
-  expect(tallBand).toBeGreaterThan(shortBand)
-  expect(tallBand).toBeLessThanOrEqual(18)
+  expect(tallBand).toBe(5)
 })
 
 test('a short band keeps her face beside one line', async ($, on) => {

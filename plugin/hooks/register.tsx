@@ -54,9 +54,12 @@ const BUBBLE_MIN = 30 // columns the band keeps for the speech bubble
 // terminal's rows (within the bounds); in the dock it takes at most these
 // shares of the pane's width and height, and keeps rows for the chip,
 // bubble, stats and a few recent calls.
+// The band's rows count its frame; the cap keeps it to half of what a
+// 46-row pane used to give it (14 rows).
 const BAND_ROWS_SHARE = 0.3
-const BAND_ROWS_MIN = 8
-const BAND_ROWS_MAX = 18
+const BAND_ROWS_MIN = 5
+const BAND_ROWS_MAX = 7
+const BAND_FRAME = 2 // the band's rounded frame: a row above and below, a column each side
 const DOCK_WIDTH_SHARE = 0.6
 const DOCK_ROWS_SHARE = 0.4
 const DOCK_TEXT_ROWS = 8 // name (2) · bubble (3) · stats (1) · recent heading (2)
@@ -679,10 +682,11 @@ export const register: Register = on => {
     // A picture takes a share of the terminal's height; cells keep their one size.
     const termRows = e.viewport?.rows ?? 40
     const bandRows = Math.min(e.props.maxRows, Math.max(BAND_ROWS_MIN, Math.min(BAND_ROWS_MAX, Math.round(termRows * BAND_ROWS_SHARE))))
-    const spriteRoom = { columns: cols - BUBBLE_MIN - 6, rows: bandRows }
+    const inner = cols - BAND_FRAME // inside the frame
+    const spriteRoom = { columns: inner - BUBBLE_MIN - 6, rows: bandRows - BAND_FRAME }
     const { state, offset } = bandSprite()
     const isImage = wantsImage() && (await loadPng($, activeSet, state, frameIndex(), 'small')) !== null
-    const tooSmall = isImage ? bandRows < IMAGE_ROWS_MIN || spriteRoom.columns < 8 : e.props.maxRows < sr
+    const tooSmall = isImage ? spriteRoom.rows < IMAGE_ROWS_MIN || spriteRoom.columns < 8 : e.props.maxRows < sr + BAND_FRAME
 
     // A short band (a small split, a tall status line): her face as tall as
     // the rows left, beside the one-line status.
@@ -701,7 +705,7 @@ export const register: Register = on => {
         </Box>
       )
     }
-    if (tooSmall || cols < sc + 16) {
+    if (tooSmall || inner < sc + 16) {
       sites.band = undefined
       return (
         <Text wrap="truncate-end">
@@ -713,9 +717,14 @@ export const register: Register = on => {
     }
 
     // Cells get room to stroll; a picture stays put (moving it would mean a redraw per step).
-    const room = isImage ? 0 : Math.max(0, Math.min(WALK_MAX, cols - sc - BUBBLE_MIN - 4))
+    const room = isImage ? 0 : Math.max(0, Math.min(WALK_MAX, inner - sc - BUBBLE_MIN - 4))
     const sprite = await drawSprite($, { Raster, Image }, 'band', e.requestId, 'small', sc + room, state, Math.min(offset, room), spriteRoom)
-    return compact(els, sprite, v, cols, true)
+    // Framed like the pane seated above the prompt.
+    return (
+      <Box borderStyle="round" borderColor={THEME.muted} width={cols} backgroundColor={THEME.surface}>
+        {compact(els, sprite, v, inner, true)}
+      </Box>
+    )
   })
 }
 
