@@ -157,6 +157,7 @@ test('the pane seated above the prompt asks for the band height', async ($, on) 
   on('ui.blit', () => ({ value: {} }))
   on('session.start', (_, e) => ({ cwd: e.cwd }))
   mock.env(on, {})
+  on('ui.close', () => ({ value: {} }))
   const asked: number[] = []
   on('ui.open', (_, e) => {
     if (e.rows !== undefined) asked.push(e.rows)
@@ -166,4 +167,14 @@ test('the pane seated above the prompt asks for the band height', async ($, on) 
   await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
   await $.command.run({ command: 'chibi', args: 'pane' })
   expect(asked.at(-1)).toBe(7)
+
+  // Where it cannot dock the band mode takes the framed pane too.
+  asked.length = 0
+  await $.command.run({ command: 'chibi', args: 'band', presentation: { isFullscreen: true, columns: 90 } })
+  expect(asked).toEqual([7])
+
+  // Where it docks, the band mode keeps the band.
+  asked.length = 0
+  await $.command.run({ command: 'chibi', args: 'band', presentation: { isFullscreen: true, columns: 135 } })
+  expect(asked).toEqual([])
 })

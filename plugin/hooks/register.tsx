@@ -67,6 +67,7 @@ const DOCK_RECENT_MIN = 4
 const IMAGE_ROWS_MIN = 5 // below this the band draws its mini row: a small face beside one line
 const MINI_ROWS_MIN = 2
 const PANE_POLL_MS = 1_000
+const DOCK_MIN_COLUMNS = 110 // the fullscreen layout docks a pane from this width
 // Every blit moves the terminal's cursor away and back, which reads as a
 // flickering caret: faster states skip frames to draw at most this often.
 const MIN_FRAME_MS = 240
@@ -141,6 +142,10 @@ let mode: LayoutMode = 'auto'
 let renderPref: RenderMode = 'auto'
 let imageBroken = false
 let timer: { cancel: () => void } | null = null
+/** Whether the screen docks a pane at the side, as last measured; undefined before. */
+let canDock: boolean | undefined
+/** Set when the pane docked while the band was asked for: the clock closes it. */
+let isDockedInBand = false
 const sites: { pane?: Site; band?: Site } = {}
 const cellsOf = makeCellCache()
 const pngCache = new Map<string, string | null>()
@@ -151,6 +156,11 @@ type $T = EngineInterface
 
 function oneShotMs(state: StateName): number {
   return SMOOTH.states[state].durations.reduce((a, b) => a + b, 0) * REPEAT
+}
+
+/** Whether a pane opened on this screen docks at the side rather than sitting above the prompt. */
+function dockable(isFullscreen: boolean | undefined, columns: number | undefined): boolean {
+  return isFullscreen !== false && (columns ?? DOCK_MIN_COLUMNS) >= DOCK_MIN_COLUMNS
 }
 
 function fmtSeconds(s: number): string {
@@ -365,6 +375,11 @@ async function tick($: $T) {
 
   if (now - lastPanePoll >= PANE_POLL_MS) {
     lastPanePoll = now
+    if (isDockedInBand) {
+      // The band was asked for: a docked pane gives the room back to it.
+      isDockedInBand = false
+      if (mode === 'band') await $.ui.close({ id: PANE })
+    }
     const panes = await $.ui.panes()
     const isUp = panes.some(p => p.id === PANE && p.isPlaced && p.isShown)
     if (isUp !== (await read($, paneShown))) await update($, paneShown, () => isUp)
@@ -459,8 +474,9 @@ export const register: Register = on => {
     await setView($, { bubble: '收到！馬上開始', isDozing: false })
     // A pane opened unasked waits below the dock's width; opened now, at the
     // person's prompt, it is placed at any width: framed above the prompt on a
-    // narrow screen, which reads better than the band.
-    if (mode === 'auto' || mode === 'pane') {
+    // narrow screen, which reads better than the band. The band mode takes
+    // that framed pane too, where it cannot dock.
+    if (mode === 'auto' || mode === 'pane' || (mode === 'band' && canDock === false)) {
       const panes = await $.ui.panes()
       if (!panes.some(p => p.id === PANE && p.isPlaced)) void $.ui.open(paneArgs())
     }
@@ -560,7 +576,8 @@ export const register: Register = on => {
     }
     if (word === 'auto' || word === 'pane' || word === 'band' || word === 'off') {
       await save({ ...p, mode: word })
-      if (word === 'auto' || word === 'pane') {
+      canDock = dockable(e.presentation?.isFullscreen, e.presentation?.columns)
+      if (word === 'auto' || word === 'pane' || (word === 'band' && !canDock)) {
         const opened = await $.ui.open(paneArgs())
         if (!opened.isPlaced && word === 'pane')
           return { text: [`面板還沒放上：${opened.reason ?? '畫面太窄'}`, ...hints].join('\n') }
@@ -568,7 +585,12 @@ export const register: Register = on => {
         await $.ui.close({ id: PANE })
       }
       if (word === 'off') $.ui.status(`${ICON[shown]} Claude ちゃん：${TITLE[shown]}`)
-      const label = { auto: '自動（寬用面板、窄用上方列）', pane: '側面板', band: '輸入框上方列', off: '只用狀態列' }[word]
+      const label = {
+        auto: '自動（寬螢幕停靠右側，窄螢幕框在輸入框上方）',
+        pane: '面板（寬螢幕停靠右側，窄螢幕框在輸入框上方）',
+        band: '輸入框上方（窄螢幕用有 × 的框，寬螢幕用上方列）',
+        off: '只用狀態列',
+      }[word]
       return { text: [`Claude ちゃん顯示方式：${label}`, ...(word === 'auto' || word === 'pane' ? hints : [])].join('\n') }
     }
     return {
@@ -598,6 +620,7 @@ export const register: Register = on => {
     imageBroken = await read($, imageFailed)
     const cols = e.props.bodyColumns
     const isDock = e.props.placement === 'dock'
+    if (isDock && p.mode === 'band') isDockedInBand = true
     const size: SizeName = isDock && cols >= activeSet.sizes.big.columns ? 'big' : 'small'
     const sc = activeSet.sizes[size].columns
     const bodyRows = e.props.scroll.bodyRows
@@ -669,6 +692,7 @@ export const register: Register = on => {
     const p = await read($, prefs)
     const v = await read($, view)
     const isPaneUp = await read($, paneShown)
+    if (e.viewport !== undefined) canDock = dockable(e.viewport.isFullscreen, e.viewport.columns)
     if (e.props.hasSurvey || p.mode === 'off' || p.mode === 'pane' || isPaneUp) {
       sites.band = undefined
       return next(e)
