@@ -229,11 +229,14 @@ async function screenHints($: $T, isFullscreen: boolean): Promise<string[]> {
 
 /**
  * The pane as opened: docked it is PANE_COLUMNS wide; seated inline above the
- * prompt it asks for the rows the bust takes plus the frame's two, so the
- * picture is not cut off at the bottom.
+ * prompt it asks for as many rows as the band takes, so both look alike
+ * (cells ask for the bust's rows plus two, so it is not cut off).
  */
 function paneArgs() {
-  const rows = Math.max(activeSet.imageSizes.small.rows, spriteRows(activeSet, 'small')) + 2
+  // A picture takes the band's cap (frame included); cells keep their one size.
+  const rows = wantsImage()
+    ? BAND_ROWS_MAX - BAND_FRAME
+    : Math.max(activeSet.imageSizes.small.rows, spriteRows(activeSet, 'small')) + 2
   return { id: PANE, title: PANE_TITLE, columns: PANE_COLUMNS, rows, backgroundColor: THEME.surface }
 }
 

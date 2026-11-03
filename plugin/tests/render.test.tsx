@@ -148,3 +148,22 @@ test('a prompt seats the pane that waited for room', async ($, on) => {
   await $.prompt.submit({ text: 'hi' })
   expect(opens).toBe(before + 1)
 })
+
+test('the pane seated above the prompt asks for the band height', async ($, on) => {
+  mock.clock(on)
+  mock.store(on)
+  on('command.register', () => ({ value: { command: 'chibi' } }))
+  on('ui.panes', () => ({ value: [] }))
+  on('ui.blit', () => ({ value: {} }))
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  mock.env(on, {})
+  const asked: number[] = []
+  on('ui.open', (_, e) => {
+    if (e.rows !== undefined) asked.push(e.rows)
+    return { value: { isPlaced: true } }
+  })
+  on('fs.read', () => ({ value: { base64: PNG } }))
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+  await $.command.run({ command: 'chibi', args: 'pane' })
+  expect(asked.at(-1)).toBe(7)
+})
