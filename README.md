@@ -442,6 +442,7 @@ claude-chibi-cli/
 │  ├─ hooks/hooks.json
 │  ├─ hooks/register.tsx             事件、狀態機、面板與上方列的繪製
 │  ├─ hooks/mood.ts                  pickState()：狀態優先順序
+│  ├─ hooks/poke.tsx                 疊在圖上的透明點擊區（Client）
 │  ├─ hooks/sprite.ts                幀解碼 → Raster 四分塊字元
 │  ├─ hooks/frames-smooth.ts         流暢版字元畫動畫幀（自動產生）
 │  ├─ hooks/frames-classic.ts        經典版字元畫動畫幀（自動產生）
@@ -450,6 +451,8 @@ claude-chibi-cli/
 │  ├─ types/index.d.ts               $.state 型別契約
 │  └─ tests/render.test.tsx          繪製測試
 ├─ tools/build_frames.py             精靈圖 → 動畫幀轉換
+├─ tools/build_angry.py              叉腰姿勢圖 → 生氣動畫幀（原圖）
+├─ tools/assets/                     生氣動畫的素材（叉腰姿勢、Twemoji 💢）
 ├─ tools/make_readme_images.py       README 示意圖產生器
 ├─ docs/images/                      README 的示意 GIF
 ├─ install.ps1 / install.sh          安裝、更新、移除
