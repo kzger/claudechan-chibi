@@ -1,4 +1,4 @@
-"""Convert Codex v1 pet spritesheets into the chibi-companion mod's frames.
+"""Convert Codex v1 pet spritesheets into the claudechan-chibi mod's frames.
 
 Each spritesheet is 1536x1872: 8 columns x 9 rows of 192x208 cells. Every frame is
 cropped with one bounding box shared by the whole set (so the feet stay on one

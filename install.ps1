@@ -1,11 +1,11 @@
 ﻿<#
 .SYNOPSIS
-  安裝 / 更新 / 移除 Claude ちゃん終端機陪伴 mod（chibi-companion）。
+  安裝 / 更新 / 移除 Claude ちゃん終端機陪伴 mod（claudechan-chibi）。
 
 .DESCRIPTION
-  1. 把本資料夾的 marketplace 與 plugin 複製到 ~/.claude/local-marketplaces/chibi-companion
+  1. 把本資料夾的 marketplace 與 plugin 複製到 ~/.claude/local-marketplaces/claudechan-chibi
   2. 以本機資料夾註冊 marketplace「chibi-local」
-  3. 安裝 chibi-companion@chibi-local（預設 user scope：所有專案都會出現）
+  3. 安裝 claudechan-chibi@chibi-local（預設 user scope：所有專案都會出現）
   已安裝時再執行一次即為更新；加 -Uninstall 為移除。
   Windows PowerShell 5.1 與 PowerShell 7 皆可執行。
 
@@ -20,10 +20,12 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$PluginName = 'chibi-companion'
+$PluginName = 'claudechan-chibi'
 $Market = 'chibi-local'
 $Src = $PSScriptRoot
 $Dest = Join-Path $HOME ".claude\local-marketplaces\$PluginName"
+$OldPluginName = 'chibi-companion' # the name before 0.4.0
+$OldDest = Join-Path $HOME ".claude\local-marketplaces\$OldPluginName"
 
 function Invoke-Claude {
   param([string[]]$Arguments, [switch]$AllowFail)
@@ -52,6 +54,18 @@ foreach ($need in @('.claude-plugin\marketplace.json', 'plugin\.claude-plugin\pl
 }
 
 Write-Host "複製檔案到 $Dest" -ForegroundColor Cyan
+# Before 0.4.0 the mod was named chibi-companion: take that install out first,
+# and the marketplace that points at its folder.
+$listed = (& claude plugin list 2>$null | Out-String)
+if ((Test-Path $OldDest) -or ($listed -match [regex]::Escape("$OldPluginName@$Market"))) {
+  Write-Host "移除舊名稱 $OldPluginName ..." -ForegroundColor Cyan
+  Invoke-Claude -Arguments @('plugin', 'uninstall', "$OldPluginName@$Market", '-s', $Scope) -AllowFail
+  if (Test-Path $OldDest) {
+    Invoke-Claude -Arguments @('plugin', 'marketplace', 'remove', $Market) -AllowFail
+    Remove-Item $OldDest -Recurse -Force
+  }
+}
+
 if (Test-Path $Dest) { Remove-Item $Dest -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $Dest | Out-Null
 Copy-Item (Join-Path $Src '.claude-plugin') -Destination $Dest -Recurse

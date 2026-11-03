@@ -1,7 +1,7 @@
 import { expect, mock, test } from 'claude-code/testing'
 
 const PANE = {
-  plugin: 'chibi-companion',
+  plugin: 'claudechan-chibi',
   component: 'Pane',
   requestId: 'chibi',
   props: {
@@ -15,7 +15,7 @@ const PANE = {
 } as const
 
 const BAND = {
-  plugin: 'chibi-companion',
+  plugin: 'claudechan-chibi',
   component: 'AbovePrompt',
   requestId: 'band',
   props: {

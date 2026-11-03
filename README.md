@@ -1,6 +1,6 @@
-# Claude ちゃん・終端機陪伴（chibi-companion）
+# Claude ちゃん・終端機陪伴（claudechan-chibi）
 
-**目前版本：0.3.3**（2026-11-03）
+**目前版本：0.4.0**（2026-11-03）
 
 讓 Q 版 Claude ちゃん住進 Claude Code 的終端機介面。她會依 Claude 正在做的事切換 9 種動畫：讀檔、改檔、等你核准、出錯、完成……點她的圖還會有反應，點太快會生氣。
 寬螢幕時她坐在右側面板，窄螢幕時改站在輸入框上方。
@@ -53,25 +53,37 @@
 在 Claude Code 的提示列輸入：
 
 ```
-/plugin install chibi-companion --marketplace kzger/chibi-companion
+/plugin install claudechan-chibi --marketplace kzger/claudechan-chibi
 ```
 
 或在 shell 裡：
 
 ```bash
-claude plugin install chibi-companion --marketplace kzger/chibi-companion
+claude plugin install claudechan-chibi --marketplace kzger/claudechan-chibi
 ```
 
-出現 `Add marketplace?` 時按 `y`，選 user scope 後按 Enter 即可。桌面版 App（`/plugin` 不能用時）：點提示框旁的 **+** → Plugins → Add marketplace，輸入 `kzger/chibi-companion`，再 Add plugin。
+出現 `Add marketplace?` 時按 `y`，選 user scope 後按 Enter 即可。桌面版 App（`/plugin` 不能用時）：點提示框旁的 **+** → Plugins → Add marketplace，輸入 `kzger/claudechan-chibi`，再 Add plugin。
 
 #### 更新到 GitHub 上的新版
 
 ```bash
 claude plugin marketplace update chibi-local
-claude plugin update chibi-companion@chibi-local
+claude plugin update claudechan-chibi@chibi-local
 ```
 
 然後在**正在執行的** Claude Code 裡輸入 `/reload-plugins`。
+
+#### 從舊名稱 chibi-companion 升級（0.3.x 以前）
+
+0.4.0 起 mod 與 repo 都改名為 `claudechan-chibi`。名稱不同，`plugin update` 不會自動換過去，要移除舊的、裝新的：
+
+```bash
+claude plugin uninstall chibi-companion@chibi-local
+claude plugin marketplace update chibi-local
+claude plugin install claudechan-chibi@chibi-local
+```
+
+舊的 GitHub 網址 `kzger/chibi-companion` 會自動轉到新網址。設定（`/chibi` 的顯示方式、圖庫、繪製方式）是跟著名稱存的，換名後會回到預設值，重新設定一次即可。用 `install.sh` / `install.ps1` 安裝的會自動移除舊名稱。
 
 > `/exit` 再開 `claude` 不一定會重新載入：Claude Code 若以背景常駐（daemon）方式執行，重開只是 `claude attach` 回到同一個程序，記憶體裡仍是舊版 mod。`/reload-plugins` 一定有效。
 
@@ -95,9 +107,9 @@ bash install.sh
 
 安裝腳本會做三件事：
 
-1. 把 `.claude-plugin/`、`plugin/`、README、ATTRIBUTION 複製到 `~/.claude/local-marketplaces/chibi-companion/`
+1. 把 `.claude-plugin/`、`plugin/`、README、ATTRIBUTION 複製到 `~/.claude/local-marketplaces/claudechan-chibi/`
 2. 以這個資料夾註冊本機 marketplace `chibi-local`
-3. 執行 `claude plugin install chibi-companion@chibi-local`（預設 `user` scope，所有專案都會出現）
+3. 執行 `claude plugin install claudechan-chibi@chibi-local`（預設 `user` scope，所有專案都會出現）
 
 完成後重新啟動 `claude` 即可看到她。
 
@@ -111,7 +123,7 @@ bash install.sh
 
 ```bash
 claude plugin marketplace add <本資料夾的絕對路徑>
-claude plugin install chibi-companion@chibi-local
+claude plugin install claudechan-chibi@chibi-local
 ```
 
 > 這種方式直接讀本資料夾，資料夾不能刪或搬走。
@@ -405,7 +417,7 @@ claude plugin test plugin         # 執行 plugin/tests 的繪製測試
 
 | 狀況 | 處理 |
 |---|---|
-| 完全沒出現 | `claude plugin list` 確認 `chibi-companion@chibi-local` 已啟用；用 `claude --debug` 啟動，搜尋 `chibi-companion` |
+| 完全沒出現 | `claude plugin list` 確認 `claudechan-chibi@chibi-local` 已啟用；用 `claude --debug` 啟動，搜尋 `claudechan-chibi` |
 | 面板沒開 | 終端機寬度不到 144 欄時，自動模式不會開面板，會改用上方列；可用 `/chibi pane` 強制開啟 |
 | 面板只出現在輸入框上方、不在右側 | 不是 fullscreen 畫面（tmux 預設如此）：執行 `/tui fullscreen`，或設定 `CLAUDE_CODE_NO_FLICKER=1`（見 macOS 的 tmux 說明） |
 | 動畫時游標一直閃、輸入法組字跟著閃 | tmux 沒開同步更新，或 tmux server 早於 3.8：加 `set -as terminal-features ",xterm-256color:sync"`，並確認 `tmux display -p '#{version}'` ≥ 3.8，否則 `tmux kill-server` 重開（見 macOS 的 tmux 說明） |
@@ -416,7 +428,7 @@ claude plugin test plugin         # 執行 plugin/tests 的繪製測試
 | 圖案有細縫或格線 | 終端機用字型畫方塊字元而不是自己繪製；換字型，或調整行距為 1.0 |
 | 顏色怪、出現色塊 | 終端機沒開真彩色；tmux 使用者見上方「Ghostty + tmux」第 2 步的真彩色設定 |
 | 圖案比例扁或長 | 字型行高不是 1:2；換一個等寬字型，或把行距設回 1.0 |
-| 想暫時關掉 | `/chibi off`，或 `claude plugin disable chibi-companion@chibi-local` |
+| 想暫時關掉 | `/chibi off`，或 `claude plugin disable claudechan-chibi@chibi-local` |
 
 ---
 
@@ -425,7 +437,7 @@ claude plugin test plugin         # 執行 plugin/tests 的繪製測試
 ```
 claude-chibi-cli/
 ├─ .claude-plugin/marketplace.json   本機 marketplace（chibi-local）
-├─ plugin/                           mod 本體（chibi-companion）
+├─ plugin/                           mod 本體（claudechan-chibi）
 │  ├─ .claude-plugin/plugin.json
 │  ├─ hooks/hooks.json
 │  ├─ hooks/register.tsx             事件、狀態機、面板與上方列的繪製

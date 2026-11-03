@@ -1,4 +1,4 @@
-# chibi-companion
+# claudechan-chibi
 
 Claude Code 的 mod（function hooks plugin）：Q 版 Claude ちゃん動畫陪伴。mod 本體在 `plugin/`，使用說明見 `README.md`。
 
@@ -11,7 +11,7 @@ claude plugin test plugin       # 執行 plugin/tests 的繪製測試
 
 ## 發佈更新（重要）
 
-使用者是從 GitHub marketplace（`kzger/chibi-companion`，本機名稱 `chibi-local`）安裝的。`claude plugin update` **只看版本號**判斷要不要更新。
+使用者是從 GitHub marketplace（`kzger/claudechan-chibi`，本機名稱 `chibi-local`）安裝的。`claude plugin update` **只看版本號**判斷要不要更新。
 
 **每次修改 `plugin/` 並 push 時，Claude 要主動完成以下步驟（不用等使用者要求）：**
 
@@ -21,9 +21,9 @@ claude plugin test plugin       # 執行 plugin/tests 的繪製測試
 3. push 後在本機更新：
    ```bash
    claude plugin marketplace update chibi-local
-   claude plugin update chibi-companion@chibi-local
+   claude plugin update claudechan-chibi@chibi-local
    ```
-   確認 `~/.claude/plugins/cache/chibi-local/chibi-companion/<新版本>/` 存在且是新程式碼。
+   確認 `~/.claude/plugins/cache/chibi-local/claudechan-chibi/<新版本>/` 存在且是新程式碼。
 4. **提醒使用者在 Claude Code 裡執行 `/reload-plugins`**（slash command，Claude 無法代為執行）。
 
 注意：`/exit` 後重開 `claude` **不會**載入新版。這台機器的 Claude Code 以背景 daemon 執行，重開只是 `claude attach` 回到同一個程序（可用 `ps -axo pid,lstart,command | grep claude` 看程序啟動時間是否早於更新時間）。一定要 `/reload-plugins`。

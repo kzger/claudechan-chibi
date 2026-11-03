@@ -1,17 +1,19 @@
 #!/usr/bin/env bash
-# 安裝 / 更新 / 移除 Claude ちゃん終端機陪伴 mod（chibi-companion）— macOS / Linux / WSL / Git Bash
+# 安裝 / 更新 / 移除 Claude ちゃん終端機陪伴 mod（claudechan-chibi）— macOS / Linux / WSL / Git Bash
 #
 #   ./install.sh                 安裝或更新（user scope）
 #   ./install.sh --scope project 只裝在目前專案
 #   ./install.sh --uninstall     移除
 set -euo pipefail
 
-PLUGIN=chibi-companion
+PLUGIN=claudechan-chibi
 MARKET=chibi-local
 SCOPE=user
 UNINSTALL=0
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEST="$HOME/.claude/local-marketplaces/$PLUGIN"
+OLD_PLUGIN=chibi-companion # the name before 0.4.0
+OLD_DEST="$HOME/.claude/local-marketplaces/$OLD_PLUGIN"
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -34,6 +36,17 @@ if [ "$UNINSTALL" = 1 ]; then
   rm -rf "$DEST"
   echo "完成。重新啟動 Claude Code 後生效。"
   exit 0
+fi
+
+# Before 0.4.0 the mod was named chibi-companion: take that install out first,
+# and the marketplace that points at its folder.
+if [ -d "$OLD_DEST" ] || claude plugin list 2>/dev/null | grep -q "$OLD_PLUGIN@$MARKET"; then
+  echo "移除舊名稱 $OLD_PLUGIN ..."
+  run plugin uninstall "$OLD_PLUGIN@$MARKET" -s "$SCOPE" || true
+  if [ -d "$OLD_DEST" ]; then
+    run plugin marketplace remove "$MARKET" || true
+    rm -rf "$OLD_DEST"
+  fi
 fi
 
 for need in .claude-plugin/marketplace.json plugin/.claude-plugin/plugin.json plugin/hooks/register.tsx plugin/hooks/frames-smooth.ts; do

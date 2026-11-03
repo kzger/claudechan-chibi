@@ -22,7 +22,7 @@ export type Prefs = { mode: LayoutMode; set: SetName; render: RenderMode }
 
 declare module 'claude-code' {
   interface PluginState {
-    'chibi-companion': {
+    'claudechan-chibi': {
       view: Shaped<View>
       prefs: Shaped<Prefs>
       paneShown: boolean

@@ -123,12 +123,12 @@ const INITIAL_VIEW: View = {
   isBandOpen: true,
   recent: [],
 }
-const view = atom({ plugin: 'chibi-companion', key: 'view' } as const, INITIAL_VIEW, { shape: 'view-1' })
+const view = atom({ plugin: 'claudechan-chibi', key: 'view' } as const, INITIAL_VIEW, { shape: 'view-1' })
 const DEFAULT_PREFS: Prefs = { mode: 'auto', set: 'smooth', render: 'auto' }
-const prefs = atom({ plugin: 'chibi-companion', key: 'prefs' } as const, DEFAULT_PREFS, { shape: 'prefs-2' })
-const paneShown = atom({ plugin: 'chibi-companion', key: 'paneShown' } as const, false)
+const prefs = atom({ plugin: 'claudechan-chibi', key: 'prefs' } as const, DEFAULT_PREFS, { shape: 'prefs-2' })
+const paneShown = atom({ plugin: 'claudechan-chibi', key: 'paneShown' } as const, false)
 /** Set once this terminal drew an Image's alt instead of its picture. */
-const imageFailed = atom({ plugin: 'chibi-companion', key: 'imageFailed' } as const, false)
+const imageFailed = atom({ plugin: 'claudechan-chibi', key: 'imageFailed' } as const, false)
 
 // ─── module state (animation bookkeeping; starts over on reload) ────────────
 
