@@ -312,7 +312,10 @@ function paneArgs() {
   const rows = wantsImage()
     ? BAND_ROWS_MAX - BAND_FRAME
     : Math.max(activeSet.imageSizes.small.rows, spriteRows(activeSet, 'small')) + 2
-  return { id: PANE, title: PANE_TITLE, columns: PANE_COLUMNS, rows, backgroundColor: THEME.surface }
+  // 'transparent', not a colour: a colour stops at the body, and the rows the
+  // engine draws around it (the title with ×, the foot) keep its grey sidebar
+  // backdrop. Transparent drops that fill; the body paints its own surface.
+  return { id: PANE, title: PANE_TITLE, columns: PANE_COLUMNS, rows, backgroundColor: 'transparent' }
 }
 
 const kindLabel = (site?: Site) => (site === undefined ? '未顯示' : site.kind === 'image' ? '原圖' : '字元')
@@ -749,7 +752,7 @@ export const register: Register = on => {
     const room = Math.max(0, bodyRows - shownRows - DOCK_TEXT_ROWS)
     const recent = v.recent.slice(-room)
     return (
-      <Box flexDirection="column">
+      <Box flexDirection="column" width={cols} height={bodyRows} backgroundColor={THEME.surface}>
         <Box backgroundColor={stageOf('pane')} justifyContent="center">
           {sprite}
         </Box>
