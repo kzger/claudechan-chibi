@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 安裝 / 更新 / 移除 Claude 娘終端機陪伴 mod（chibi-companion）— macOS / Linux / WSL / Git Bash
+# 安裝 / 更新 / 移除 Claude ちゃん終端機陪伴 mod（chibi-companion）— macOS / Linux / WSL / Git Bash
 #
 #   ./install.sh                 安裝或更新（user scope）
 #   ./install.sh --scope project 只裝在目前專案

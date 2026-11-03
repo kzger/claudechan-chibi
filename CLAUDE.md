@@ -1,6 +1,6 @@
 # chibi-companion
 
-Claude Code 的 mod（function hooks plugin）：Q 版 Claude 娘動畫陪伴。mod 本體在 `plugin/`，使用說明見 `README.md`。
+Claude Code 的 mod（function hooks plugin）：Q 版 Claude ちゃん動畫陪伴。mod 本體在 `plugin/`，使用說明見 `README.md`。
 
 ## 修改後的檢查
 

@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-  安裝 / 更新 / 移除 Claude 娘終端機陪伴 mod（chibi-companion）。
+  安裝 / 更新 / 移除 Claude ちゃん終端機陪伴 mod（chibi-companion）。
 
 .DESCRIPTION
   1. 把本資料夾的 marketplace 與 plugin 複製到 ~/.claude/local-marketplaces/chibi-companion
