@@ -54,11 +54,11 @@ const BUBBLE_MIN = 30 // columns the band keeps for the speech bubble
 // terminal's rows (within the bounds); in the dock it takes at most these
 // shares of the pane's width and height, and keeps rows for the chip,
 // bubble, stats and a few recent calls.
-// The band's rows count its frame; the cap keeps it to half of what a
-// 46-row pane used to give it (14 rows).
+// The band's rows count its frame; the cap keeps it well under what a
+// 46-row pane used to give it (14 rows): 7 rows inside the frame.
 const BAND_ROWS_SHARE = 0.3
 const BAND_ROWS_MIN = 5
-const BAND_ROWS_MAX = 7
+const BAND_ROWS_MAX = 9
 const BAND_FRAME = 2 // the band's rounded frame: a row above and below, a column each side
 const DOCK_WIDTH_SHARE = 0.6
 const DOCK_ROWS_SHARE = 0.4

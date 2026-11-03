@@ -107,9 +107,9 @@ test('the picture grows with the room: a wider dock; the band stops at its cap',
   const wideDock = await rowsOf({ ...PANE, props: { ...PANE.props, bodyColumns: 70 }, surface: 'terminal' })
   expect(wideDock).toBeGreaterThan(narrowDock)
 
-  // The band's picture stops growing at its cap: 7 rows, frame included.
+  // The band's picture stops growing at its cap: 9 rows, frame included.
   const tallBand = await rowsOf({ ...BAND, viewport: { columns: 95, rows: 60 }, props: { ...BAND.props, maxRows: 30 }, surface: 'terminal' })
-  expect(tallBand).toBe(5)
+  expect(tallBand).toBe(7)
 })
 
 test('a short band keeps her face beside one line', async ($, on) => {
