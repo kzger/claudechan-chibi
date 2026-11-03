@@ -44,7 +44,6 @@ const CHIP: Record<StateName, string> = {
 }
 const SETS: Record<SetName, SpriteSet> = { smooth: SMOOTH, classic: CLASSIC }
 
-const BAND_HIDE_AFTER_MS = 30_000 // idle this long: the band folds away
 const DOZE_AFTER_MS = 5 * 60_000 // idle this long: she dozes off
 const DOZE_FRAME = 3 // the idle frame with closed eyes
 const DOZE_TICK_MS = 4_000
@@ -363,11 +362,6 @@ async function tick($: $T) {
 
   const want = pickState(flags)
   const dozing = want === 'idle' && now - lastActivity > DOZE_AFTER_MS
-  const bandOpen =
-    flags.isWorking ||
-    flags.isWaiting ||
-    Math.max(flags.greetUntil, flags.ackUntil, flags.failedUntil, flags.reviewUntil) > now ||
-    now - lastActivity < BAND_HIDE_AFTER_MS
 
   if (now - lastPanePoll >= PANE_POLL_MS) {
     lastPanePoll = now
@@ -385,8 +379,7 @@ async function tick($: $T) {
     if (isUp !== (await read($, paneShown))) await update($, paneShown, () => isUp)
   }
 
-  const v = await read($, view)
-  if (want !== shown || dozing !== isDozing || bandOpen !== v.isBandOpen) {
+  if (want !== shown || dozing !== isDozing) {
     const changedMood = want !== shown
     shown = want
     isDozing = dozing
@@ -394,7 +387,7 @@ async function tick($: $T) {
       frame = 0
       walk = null
     }
-    await setView($, { state: want, isDozing: dozing, isBandOpen: bandOpen, ...(dozing ? { bubble: 'zzz…' } : {}) })
+    await setView($, { state: want, isDozing: dozing, ...(dozing ? { bubble: 'zzz…' } : {}) })
     if (mode === 'off') $.ui.status(`${ICON[want]} Claude 娘：${dozing ? '打瞌睡' : TITLE[want]}`)
     return // the redraw paints this frame
   }
@@ -686,7 +679,7 @@ export const register: Register = on => {
     const p = await read($, prefs)
     const v = await read($, view)
     const isPaneUp = await read($, paneShown)
-    if (e.props.hasSurvey || p.mode === 'off' || p.mode === 'pane' || isPaneUp || !v.isBandOpen) {
+    if (e.props.hasSurvey || p.mode === 'off' || p.mode === 'pane' || isPaneUp) {
       sites.band = undefined
       return next(e)
     }
