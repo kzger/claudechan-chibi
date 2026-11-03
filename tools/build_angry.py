@@ -24,7 +24,7 @@ THROB = [1.0, 1.2, 1.3, 1.15, 1.0, 1.2, 1.3, 1.1]
 MARK = Path(__file__).resolve().parent / "assets" / "twemoji-1f4a2.png"
 MARK_EDGE = (255, 244, 236, 255)  # a cream rim, so the red reads on her orange hair
 # Where the symbol sits, as fractions of the bust (over the hair on the left, clear of the flower).
-MARK_AT = (0.40, 0.53)
+MARK_AT = (0.40, 0.39)
 MARK_SIZE = 0.16  # of the bust's width
 
 
@@ -73,9 +73,15 @@ def build(name: str) -> str:
     bust = Image.open(src / "0-bust.png").convert("RGBA")
     bx, by = bust_offset(np.asarray(full), np.asarray(bust))
     pose = Image.open(POSE).convert("RGBA")
-    pose.thumbnail((full.width - 26, full.height - 5), Image.LANCZOS)
+    # Ignore near-transparent specks when measuring the visible silhouette.
+    visible = pose.getchannel("A").point(lambda alpha: 255 if alpha >= 64 else 0)
+    pose = pose.crop(visible.getbbox())
+    left, top, right, bottom = full.getchannel("A").getbbox()
+    # Leave room for the upper body to widen during the lean.
+    width = round((right - left) / (1 + max(LEAN) / 2))
+    pose = pose.resize((width, bottom - top), Image.LANCZOS)
     base = Image.new("RGBA", full.size)
-    base.alpha_composite(pose, ((full.width - pose.width) // 2, full.height - pose.height))
+    base.alpha_composite(pose, ((left + right - width) // 2, top))
     for i in range(count):
         frame = lean_in(base, LEAN[i % len(LEAN)])
         size = round(bust.width * MARK_SIZE * THROB[i % len(THROB)])
