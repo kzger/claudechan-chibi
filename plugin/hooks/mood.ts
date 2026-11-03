@@ -22,12 +22,18 @@ export type Flags = {
   failedUntil: number
   /** The turn just finished with an answer. */
   reviewUntil: number
+  /** You clicked her: she plays `pokeState` for a moment. */
+  pokeUntil: number
+  pokeState: StateName
+  /** You clicked her too often: she is cross. */
+  angryUntil: number
 }
 
 /**
  * Which animation Claude ちゃん plays right now. Called on every frame: pure and cheap.
  *
  * The Codex app's order: waiting > failed > review > running > idle.
+ * A click on her answers above all but a dialog waiting on you: anger first.
  * The two one-shots Codex has no task state for slot in where they can be seen:
  * the "got it" nod plays just before work starts (else 'running' would always
  * hide it), and the greeting only while nothing else is going on.
@@ -35,6 +41,8 @@ export type Flags = {
  */
 export function pickState(f: Flags): StateName {
   if (f.isWaiting) return 'waiting'
+  if (f.angryUntil > f.now) return 'angry'
+  if (f.pokeUntil > f.now) return f.pokeState
   if (f.failedUntil > f.now) return 'failed'
   if (f.reviewUntil > f.now) return 'review'
   if (f.ackUntil > f.now) return 'jumping'

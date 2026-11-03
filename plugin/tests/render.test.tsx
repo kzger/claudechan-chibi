@@ -178,3 +178,23 @@ test('the pane seated above the prompt asks for the band height', async ($, on) 
   await $.command.run({ command: 'chibi', args: 'band', presentation: { isFullscreen: true, columns: 135 } })
   expect(asked).toEqual([])
 })
+
+test('a click on her picture plays a reaction; clicking on and on makes her cross', async ($, on) => {
+  engine(on)
+  on('fs.read', () => ({ value: { base64: PNG } }))
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+  const bubble = async () => (await ui.find({ type: 'Text', text: /^(嗨～|嘿嘿|唔|生氣了！)/ }))?.text
+  const click = () => ui.pointer({ type: 'down', x: 1, y: 1, button: 'left', in: 'poke-band' })
+  await click()
+  expect(await bubble()).toBe('嗨～找我嗎？')
+  await click()
+  expect(await bubble()).toBe('嘿嘿，被你發現了！')
+  await click()
+  await click()
+  expect(await bubble()).toBe('唔…別一直戳啦')
+  await click()
+  expect(await bubble()).toBe('生氣了！不准再戳了！')
+  await ui.unmount()
+})

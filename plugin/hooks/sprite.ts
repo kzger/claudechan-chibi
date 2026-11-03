@@ -16,6 +16,10 @@ export type StateName =
   | 'waiting'
   | 'running'
   | 'review'
+  | 'angry'
+
+/** The states the Codex spritesheets hold; 'angry' is drawn by tools/build_angry.py (PNG only). */
+export type SheetState = Exclude<StateName, 'angry'>
 
 export type SizeName = 'big' | 'small'
 
@@ -25,8 +29,13 @@ export type SpriteSet = {
   sizes: Record<SizeName, { columns: number; rows: number }>
   /** The Image box (cells) that keeps the PNG frames' aspect. */
   imageSizes: Record<SizeName, { columns: number; rows: number }>
-  states: Record<StateName, { durations: number[]; big: string[]; small: string[] }>
+  states: Record<StateName, StateFrames>
 }
+
+export type StateFrames = { durations: number[]; big: string[]; small: string[] }
+
+/** A set as tools/build_frames.py writes it: the spritesheet's states only. */
+export type SheetSet = Omit<SpriteSet, 'states'> & { states: Record<SheetState, StateFrames> }
 
 // mask -> glyph: ' ▘▝▀▖▌▞▛▗▚▐▜▄▙▟█'
 const GLYPHS = [

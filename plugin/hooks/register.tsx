@@ -1,11 +1,11 @@
 import { atom, read, update } from 'claude-code'
-import type { Elements, EngineInterface, Register } from 'claude-code'
+import type { Elements, EngineInterface, Register, RenderElement } from 'claude-code'
 
 import type { LayoutMode, Prefs, RecentCall, RenderMode, SetName, View } from '../types'
 import { SET as CLASSIC } from './frames-classic'
 import { SET as SMOOTH } from './frames-smooth'
 import { pickState, type Flags } from './mood'
-import { makeCellCache, spriteRows, type SizeName, type SpriteSet, type StateName } from './sprite'
+import { makeCellCache, spriteRows, type SheetSet, type SizeName, type SpriteSet, type StateName } from './sprite'
 
 // ─── constants ──────────────────────────────────────────────────────────────
 
@@ -41,8 +41,9 @@ const CHIP: Record<StateName, string> = {
   waiting: THEME.info,
   failed: THEME.err,
   review: THEME.ok,
+  angry: THEME.err,
 }
-const SETS: Record<SetName, SpriteSet> = { smooth: SMOOTH, classic: CLASSIC }
+const SETS: Record<SetName, SpriteSet> = { smooth: withAngry(SMOOTH), classic: withAngry(CLASSIC) }
 
 const DOZE_AFTER_MS = 20_000 // idle this long: she dozes off
 const DOZE_FRAME = 3 // the idle frame with closed eyes
@@ -72,6 +73,19 @@ const DOCK_MIN_COLUMNS = 110 // the fullscreen layout docks a pane from this wid
 // flickering caret: faster states skip frames to draw at most this often.
 const MIN_FRAME_MS = 240
 const REPEAT = 3 // one-shot states play three loops, as in the Codex app
+// A click on her plays one reaction; this many inside the window and she gets cross.
+const POKE_WINDOW_MS = 4_000
+const POKE_ANGRY_AT = 5
+const POKE_MIN_MS = 1_500
+const POKES: { state: StateName; text: string }[] = [
+  { state: 'waving', text: '嗨～找我嗎？' },
+  { state: 'jumping', text: '嘿嘿，被你發現了！' },
+  { state: 'review', text: '在看什麼呢？我也要看' },
+  { state: 'running', text: '我有在努力喔！' },
+  { state: 'waiting', text: '……要我做什麼嗎？' },
+]
+const POKE_WARNING = '唔…別一直戳啦'
+const ANGRY_LINES = ['生氣了！不准再戳了！', '哼！', '還戳！', '不理你了啦！']
 
 const TITLE: Record<StateName, string> = {
   idle: '待命中',
@@ -83,6 +97,7 @@ const TITLE: Record<StateName, string> = {
   waiting: '等你決定',
   failed: '出錯了',
   review: '完成了',
+  angry: '生氣了',
 }
 const ICON: Record<StateName, string> = {
   idle: '✿',
@@ -94,6 +109,7 @@ const ICON: Record<StateName, string> = {
   waiting: '?',
   failed: '✗',
   review: '✓',
+  angry: '#',
 }
 
 // ─── state the drawings read ($.state: survives a hot reload) ───────────────
@@ -127,8 +143,17 @@ let flags: Flags = {
   ackUntil: 0,
   failedUntil: 0,
   reviewUntil: 0,
+  pokeUntil: 0,
+  pokeState: 'waving',
+  angryUntil: 0,
 }
 let lastActivity = 0
+/** Clicks on her, recent first out: too many inside POKE_WINDOW_MS and she gets cross. */
+let pokes: number[] = []
+let pokeTurn = 0
+/** The bubble a click replaced, and what the click said: put back once she calms down. */
+let bubbleBeforePoke: string | null = null
+let pokeBubble = ''
 let turnStartedAt = 0
 let shown: StateName = 'idle'
 let frame = 0
@@ -137,7 +162,7 @@ let isDozing = false
 let walk: { dir: 1 | -1; offset: number; room: number } | null = null
 let lastWalkAt = 0
 let lastPanePoll = 0
-let activeSet: SpriteSet = SMOOTH
+let activeSet: SpriteSet = SETS.smooth
 let mode: LayoutMode = 'auto'
 let renderPref: RenderMode = 'auto'
 let imageBroken = false
@@ -154,8 +179,38 @@ const pngCache = new Map<string, string | null>()
 
 type $T = EngineInterface
 
+/**
+ * The set with 'angry' added: its PNG frames come from tools/build_angry.py;
+ * in cells, which have none, she pouts with the 'failed' frames instead.
+ */
+function withAngry(set: SheetSet): SpriteSet {
+  const durations = [...Array(7).fill(120), 240]
+  return { ...set, states: { ...set.states, angry: { ...set.states.failed, durations } } }
+}
+
+/** A click on her: the next reaction in turn, or anger when the clicks come too fast. */
+async function poke($: $T) {
+  const now = await $.clock.now()
+  lastActivity = now
+  pokes = [...pokes.filter(t => now - t < POKE_WINDOW_MS), now]
+  const isPoked = flags.pokeUntil > now || flags.angryUntil > now
+  if (!isPoked) bubbleBeforePoke = (await read($, view)).bubble
+  let bubble: string
+  if (flags.angryUntil > now || pokes.length >= POKE_ANGRY_AT) {
+    const isNew = flags.angryUntil <= now
+    flags = { ...flags, now, angryUntil: now + oneShotMs('angry'), pokeUntil: 0 }
+    bubble = (isNew ? ANGRY_LINES[0] : ANGRY_LINES[1 + (pokes.length % (ANGRY_LINES.length - 1))]) ?? '哼！'
+  } else {
+    const r = POKES[pokeTurn++ % POKES.length] ?? { state: 'waving' as const, text: '嗨～' }
+    flags = { ...flags, now, pokeState: r.state, pokeUntil: now + Math.max(POKE_MIN_MS, oneShotMs(r.state) / REPEAT) }
+    bubble = pokes.length === POKE_ANGRY_AT - 1 ? POKE_WARNING : r.text
+  }
+  pokeBubble = bubble
+  await setView($, { bubble, isDozing: false })
+}
+
 function oneShotMs(state: StateName): number {
-  return SMOOTH.states[state].durations.reduce((a, b) => a + b, 0) * REPEAT
+  return SETS.smooth.states[state].durations.reduce((a, b) => a + b, 0) * REPEAT
 }
 
 /** Whether a pane opened on this screen docks at the side rather than sitting above the prompt. */
@@ -387,6 +442,13 @@ async function tick($: $T) {
 
   if (want !== shown || dozing !== isDozing) {
     const changedMood = want !== shown
+    const isCalm = flags.pokeUntil <= now && flags.angryUntil <= now
+    if (changedMood && isCalm && bubbleBeforePoke !== null) {
+      // Back to what she was saying, unless something new was said meanwhile.
+      if ((await read($, view)).bubble === pokeBubble) await setView($, { bubble: bubbleBeforePoke })
+      bubbleBeforePoke = null
+      pokes = []
+    }
     shown = want
     isDozing = dozing
     if (changedMood) {
@@ -606,12 +668,18 @@ export const register: Register = on => {
   })
 
   // ── the side pane (wide terminals) ──
+  // A click on her picture (poke.tsx posts it).
+  on('ui.message', async ($, e, next) => {
+    if (e.module.endsWith('poke.tsx') && (e.data as { poke?: unknown } | null)?.poke === true) await poke($)
+    return next(e)
+  }).catch(passThrough)
+
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     if (e.surface !== 'terminal') {
       const { Text } = $.ui.resolve(e)
       return <Text dimColor>Claude ちゃん只畫在終端機上。</Text>
     }
-    const { Box, Text, Raster, Image } = $.ui.resolve(e)
+    const { Box, Text, Raster, Image, Client } = $.ui.resolve(e)
     const els = { Box, Text }
     const v = await read($, view)
     const p = await read($, prefs)
@@ -630,7 +698,7 @@ export const register: Register = on => {
           rows: Math.min(Math.floor(bodyRows * DOCK_ROWS_SHARE), bodyRows - DOCK_TEXT_ROWS - DOCK_RECENT_MIN),
         }
       : { columns: cols - BUBBLE_MIN - 6, rows: bodyRows } // inline: fit the rows the pane has
-    const sprite = await drawSprite($, { Raster, Image }, 'pane', e.requestId, size, sc, shown, 0, spriteRoom)
+    const sprite = pokeable({ Box, Client }, await drawSprite($, { Raster, Image }, 'pane', e.requestId, size, sc, shown, 0, spriteRoom), 'pane')
     const shownRows = sites.pane?.rows ?? spriteRows(activeSet, size)
 
     if (!isDock) return compact(els, sprite, v, cols, false) // seated inline above the prompt
@@ -697,7 +765,7 @@ export const register: Register = on => {
       sites.band = undefined
       return next(e)
     }
-    const { Box, Text, Raster, Image } = $.ui.resolve(e)
+    const { Box, Text, Raster, Image, Client } = $.ui.resolve(e)
     const els = { Box, Text }
     activeSet = SETS[p.set]
     renderPref = p.render
@@ -718,7 +786,7 @@ export const register: Register = on => {
     // A short band (a small split, a tall status line): her face as tall as
     // the rows left, beside the one-line status.
     if (isImage && tooSmall && bandRows >= MINI_ROWS_MIN && cols >= 40) {
-      const face = await drawSprite($, { Raster, Image }, 'band', e.requestId, 'small', sc, state, 0, { columns: 12, rows: bandRows })
+      const face = pokeable({ Box, Client }, await drawSprite($, { Raster, Image }, 'band', e.requestId, 'small', sc, state, 0, { columns: 12, rows: bandRows }), 'band')
       return (
         <Box flexDirection="row" width={cols} alignItems="center" backgroundColor={THEME.surface}>
           <Box backgroundColor={THEME.stage}>{face}</Box>
@@ -745,7 +813,7 @@ export const register: Register = on => {
 
     // Cells get room to stroll; a picture stays put (moving it would mean a redraw per step).
     const room = isImage ? 0 : Math.max(0, Math.min(WALK_MAX, inner - sc - BUBBLE_MIN - 4))
-    const sprite = await drawSprite($, { Raster, Image }, 'band', e.requestId, 'small', sc + room, state, Math.min(offset, room), spriteRoom)
+    const sprite = pokeable({ Box, Client }, await drawSprite($, { Raster, Image }, 'band', e.requestId, 'small', sc + room, state, Math.min(offset, room), spriteRoom), 'band')
     // Framed like the pane seated above the prompt.
     return (
       <Box borderStyle="round" borderColor={THEME.muted} width={cols} backgroundColor={THEME.surface}>
@@ -783,8 +851,25 @@ function bubble({ Box, Text }: TextEls, text: string) {
   )
 }
 
+/**
+ * The sprite with a click target laid over it: a Client region that draws
+ * nothing (the picture shows through) and posts each left click to `ui.message`.
+ */
+function pokeable({ Box, Client }: Pick<Elements['terminal'], 'Box' | 'Client'>, sprite: Sprite, slot: 'pane' | 'band'): RenderElement {
+  const site = sites[slot]
+  if (site === undefined) return sprite
+  return (
+    <Box>
+      {sprite}
+      <Box position="absolute" top={0} left={0}>
+        <Client key={`poke-${slot}`} module="./poke.tsx" width={site.width} height={site.rows} />
+      </Box>
+    </Box>
+  )
+}
+
 /** Sprite on its stage, beside the chip, the bubble and (in the band) a hint. */
-function compact({ Box, Text }: TextEls, sprite: Sprite, v: View, cols: number, withHint: boolean) {
+function compact({ Box, Text }: TextEls, sprite: RenderElement, v: View, cols: number, withHint: boolean) {
   const els = { Box, Text }
   return (
     <Box flexDirection="row" width={cols} alignItems="center" backgroundColor={THEME.surface}>
