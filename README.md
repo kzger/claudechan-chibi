@@ -371,9 +371,17 @@ fi
 
 **點她的圖**：每點一次依序換一種反應與台詞（揮手、點頭、閱讀、寫作、等待），約 1.5 秒後回到原本的動作與台詞；打瞌睡時點她會馬上醒來。只有「等你決定」（權限確認等）時不會被打斷。點擊靠的是疊在圖上的透明區域，需要終端機支援滑鼠回報（Ghostty、kitty、iTerm2、WezTerm 等都可以）。
 
-`failed` 的 Claude 動作參考本專案的 `smooth` 角色，以六張姿勢演出受驚、低頭抱書和回神。角色原畫出自 [CrossPet（lokicorvus）](https://github.com/lokicorvus/crosspet)，改作沿用 CC BY-NC-SA 4.0。
+`failed` Claude 版參考本專案的角色動作，以六張姿勢演出受驚、低頭抱書和回神。下列 GIF 均改作自 [CrossPet（lokicorvus）](https://github.com/lokicorvus/crosspet)，沿用 CC BY-NC-SA 4.0。完整署名見 [ATTRIBUTION.txt](ATTRIBUTION.txt)。
 
-![Claude 失敗動畫](tools/assets/crosspet/claude/gif/failed.gif)
+| 角色 | 動作預覽 |
+| --- | --- |
+| Claude | ![Claude 失敗動畫](tools/assets/crosspet/claude/gif/failed.gif) |
+| DeepSeek Hoodie | ![DeepSeek Hoodie 失敗動畫](tools/assets/crosspet/deepseek-hoodie/gif/failed.gif) |
+| DeepSeek | ![DeepSeek 失敗動畫](tools/assets/crosspet/deepseek/gif/failed.gif) |
+| Egg Claude Hoodie | ![Egg Claude Hoodie 彩蛋動畫](tools/assets/crosspet/egg-claude-hoodie/gif/preview.gif) |
+| Egg Claude | ![Egg Claude 彩蛋動畫](tools/assets/crosspet/egg-claude/gif/preview.gif) |
+
+[角色素材目錄](tools/assets/crosspet)中的 `webp/` 保留全部原圖，`gif/` 收錄由多張相關姿勢組成的短片。Claude 與兩種 DeepSeek 造型有待機、失敗、工作、詢問、睡醒、安撫、左右探頭等片段，DeepSeek 另有吃飯片段。兩個彩蛋造型則各自播放扮演、被發現、現身、道別。每支 GIF 都使用不同姿勢推進動作；原圖只有單一姿勢且找不到可銜接場景的素材留在 `webp/`。
 
 `angry` 的原圖是 `tools/build_angry.py` 用叉腰的姿勢圖 `tools/assets/angry-pose.png`（以原角色為參考另外生成）做成的：往前傾兩次，頭上的 Twemoji 💢（CC BY 4.0，署名見 `plugin/ATTRIBUTION.txt`）一跳一跳。字元畫模式沒有這組幀，生氣時改畫 `failed`。
 
