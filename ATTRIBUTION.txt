@@ -13,8 +13,45 @@ Claude ちゃん 終端機陪伴 mod（claudechan-chibi）— 素材來源與授
 本 mod 將上述精靈圖縮小、減色為終端機半格字元畫（plugin/hooks/frames-*.ts），
 屬改作，沿用 CC BY-NC-SA 4.0：須保留署名、限非商業用途、以相同授權分享。
 
-CrossPet Claude 失敗動畫改作（CC BY-NC-SA 4.0）：
-- 原畫：CrossPet（lokicorvus），https://github.com/lokicorvus/crosspet
-- 角色源於社群流行的 Claude 娘設定。以本專案 smooth 動作為參考，透過 OpenAI ImageGen 補繪六張抱書反應。
-- 素材：https://github.com/lokicorvus/crosspet/tree/5c64326b6e7fc175eda0360c0bb5c4732541d138/characters/claude
-- 授權：https://github.com/lokicorvus/crosspet/blob/5c64326b6e7fc175eda0360c0bb5c4732541d138/characters/LICENSE.md
+CrossPet 角色素材與動畫改作（CC BY-NC-SA 4.0）：
+- 素材原畫：CrossPet（lokicorvus），https://github.com/lokicorvus/crosspet
+- Claude 娘：社群流行設定，使用 oops.webp、sorry.webp。
+- DeepSeek 娘：原型「溟月」由上善无形設計，深藍女僕鯨魚娘由 ZipZipPipe 設計。使用預設造型的 oops.webp、sulk.webp。
+- DeepSeek Hoodie：同一角色的連帽衫造型，使用 oops.webp、sulk.webp。
+- Egg Claude 與 Egg Claude Hoodie：CrossPet 原創的 DeepSeek 扮演 Claude 彩蛋，使用 pretend.webp、caught.webp、pop.webp、bye.webp。
+- 五個上游角色目錄的原圖按原目錄名稱分開保存。
+- 原圖與授權：https://github.com/lokicorvus/crosspet/tree/5c64326b6e7fc175eda0360c0bb5c4732541d138/characters
+- 本專案將五個角色的相關姿勢縮放並依序編排，製成 GIF。DeepSeek 失敗動畫以各造型的 oops.webp 插值生成。Claude 失敗動畫參考本專案 smooth 動作，由 OpenAI ImageGen 補繪六張姿勢，另輸出終端機 PNG 與字元動畫。
+
+逐張補幀：
+- claude/gif/annoyed.gif：以 CrossPet 的 claude/annoyed.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/asking.gif：以 CrossPet 的 claude/asking.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/busy_left.gif：以 CrossPet 的 claude/busy_left.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/busy_right.gif：以 CrossPet 的 claude/busy_right.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/bye.gif：以 CrossPet 的 claude/bye.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/clawd.gif：以 CrossPet 的 claude/clawd.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/coaxed.gif：以 CrossPet 的 claude/coaxed.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/compact.gif：以 CrossPet 的 claude/compact.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/delegating.gif：以 CrossPet 的 claude/delegating.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/dizzy.gif：以 CrossPet 的 claude/dizzy.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/edge-left.gif：以 CrossPet 的 claude/edge_left.webp 與 claude/edge_left_peek.webp 為關鍵姿勢，另用 OpenAI ImageGen 補繪四張過渡姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/edge-right.gif：以 CrossPet 的 claude/edge_right.webp 與 claude/edge_right_peek.webp 為關鍵姿勢，另用 OpenAI ImageGen 補繪四張過渡姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/fest_christmas.gif：以 CrossPet 的 claude/fest_christmas.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/fest_dragonboat.gif：以 CrossPet 的 claude/fest_dragonboat.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/fest_halloween.gif：以 CrossPet 的 claude/fest_halloween.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/fest_lantern.gif：以 CrossPet 的 claude/fest_lantern.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/fest_midautumn.gif：以 CrossPet 的 claude/fest_midautumn.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/fest_national.gif：以 CrossPet 的 claude/fest_national.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/fest_newyear.gif：以 CrossPet 的 claude/fest_newyear.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/fest_spring.gif：以 CrossPet 的 claude/fest_spring.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/forgiven.gif：以 CrossPet 的 claude/forgiven.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/greet_afternoon.gif：以 CrossPet 的 claude/greet_afternoon.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/greet_dawn.gif：以 CrossPet 的 claude/greet_dawn.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/greet_evening.gif：以 CrossPet 的 claude/greet_evening.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/greet_morning.gif：以 CrossPet 的 claude/greet_morning.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/greet_night.gif：以 CrossPet 的 claude/greet_night.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/greet_noon.gif：以 CrossPet 的 claude/greet_noon.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/happy-2.gif：以 CrossPet 的 claude/happy-2.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/hum.gif：以 CrossPet 的 claude/hum.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/idle-animated.gif：以 CrossPet 的 claude/idle、idle-2、idle-3、idle-blink 四張 WebP 為關鍵姿勢，用 OpenAI ImageGen 補繪四張過渡姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- claude/gif/listening.gif：以 CrossPet 的 claude/listening.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
