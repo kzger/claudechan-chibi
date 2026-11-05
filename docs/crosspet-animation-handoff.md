@@ -1,5 +1,11 @@
 # CrossPet 動畫素材交接
 
+## 後續生成流程（2026-11-05 更新）
+
+新增／重製角色動畫（例如 deepseek）請使用 [共用製作流程](crosspet-gif-production-guide.md)，先建立該角色工作單。Claude 新批的 [工作單](crosspet-image26-gif-worklist.md) 與 [交付紀錄](crosspet-image26-delivery.md) 另存於 image26-v1；下方 GIF／frames 數量屬既有素材整理批次，不含這批新產物。現有 image26 腳本仍含 Claude 路徑及特例，轉用前依共用流程調整。
+
+## 既有素材交接
+
 這次已完成素材整理與 GIF 拆幀。下一步是在 macOS 上確認哪些動畫要接入 Claude Code 插件，再決定各動畫的觸發條件與顯示方式。
 
 ## 素材位置
