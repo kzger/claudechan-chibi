@@ -1,6 +1,6 @@
 # claudechan-chibi
 
-Claude Code 的 mod（function hooks plugin）：Q 版 Claude ちゃん動畫陪伴。mod 本體在 `plugin/`，使用說明見 `README.md`。
+Claude Code 的 mod（function hooks plugin）：Q 版 Claude ちゃん動畫陪伴。mod 本體在 `plugin/`，使用說明見 `README.md`（英文，預設）、`README.zh-TW.md`（繁中）、`README.ja.md`（日文），三份內容要保持一致。
 
 ## 溝通語言
 
@@ -20,7 +20,8 @@ claude plugin test plugin       # 執行 plugin/tests 的繪製測試
 **每次修改 `plugin/` 並 push 時，Claude 要主動完成以下步驟（不用等使用者要求）：**
 
 1. 把 `plugin/.claude-plugin/plugin.json` 的 `version` 往上升（例如 `0.3.0` → `0.3.1`）。版本沒變，更新指令會回報「already at the latest version」，快取仍是舊程式碼。
-   同時更新 `README.md` 開頭的「**目前版本：x.y.z**（日期）」，版本號與 `plugin.json` 一致，日期填發佈當天。
+   同時更新三份 README 開頭的版本行：`README.md` 的「**Current version: x.y.z** (日期)」、`README.zh-TW.md` 的「**目前版本：x.y.z**（日期）」、`README.ja.md` 的「**現在のバージョン：x.y.z**（日期）」，版本號與 `plugin.json` 一致，日期填發佈當天。
+   改 README 內容時三份一起改。
 2. 執行 `claude plugin validate plugin` 與 `claude plugin test plugin`，都通過才 commit、push。
 3. push 後在本機更新：
    ```bash

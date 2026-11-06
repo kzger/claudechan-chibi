@@ -70,7 +70,7 @@ if (Test-Path $Dest) { Remove-Item $Dest -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $Dest | Out-Null
 Copy-Item (Join-Path $Src '.claude-plugin') -Destination $Dest -Recurse
 Copy-Item (Join-Path $Src 'plugin') -Destination $Dest -Recurse
-foreach ($f in @('README.md', 'ATTRIBUTION.txt')) {
+foreach ($f in @('README.md', 'README.zh-TW.md', 'README.ja.md', 'ATTRIBUTION.txt')) {
   if (Test-Path (Join-Path $Src $f)) { Copy-Item (Join-Path $Src $f) -Destination $Dest }
 }
 # 引擎在開發時寫入的型別檔不需要帶走

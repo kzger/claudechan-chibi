@@ -1,83 +1,89 @@
-# Claude ちゃん・終端機陪伴（claudechan-chibi）
+# Claude-chan Terminal Companion (claudechan-chibi)
 
-**目前版本：0.5.5**（2026-11-06）
+<p align="center"><b>English</b> · <a href="README.zh-TW.md">繁體中文</a> · <a href="README.ja.md">日本語</a></p>
 
-讓 Q 版 Claude ちゃん住進 Claude Code 的終端機介面。她會依 Claude 正在做的事切換動畫：思考、搜尋、寫檔、執行指令、派出助手、等你核准、出錯、完成……閒著時會換姿勢、哼歌、打哈欠睡著。點她的圖還會有反應，點太快會生氣。
-寬螢幕時她坐在右側面板，窄螢幕時改站在輸入框上方。
+**Current version: 0.5.5** (2026-11-06)
+
+A chibi Claude-chan (Claude ちゃん) who lives in Claude Code's terminal UI. She changes her animation to match what Claude is doing: thinking, searching, writing files, running commands, sending out helpers, waiting for your approval, failing, finishing… When nothing is going on she shifts her pose, hums, yawns and falls asleep. Click her picture and she reacts; click too fast and she gets cross.
+On a wide screen she sits in a pane on the right; on a narrow one she stands above the prompt.
+
+> The mod's on-screen text (status chips, speech bubbles, `/chibi` messages) is in Traditional Chinese. This README quotes it with an English gloss where it matters.
 
 <p align="center">
-  <img src="docs/images/pane.gif" alt="寬螢幕：右側面板（示意圖）" width="640"><br>
-  <sub>寬螢幕：停靠在對話右側的面板，姿勢隨工具切換：閱讀 → 寫入 → 執行指令（示意圖）</sub>
+  <img src="docs/images/pane.gif" alt="Wide screen: a pane on the right (mock-up)" width="640"><br>
+  <sub>Wide screen: a pane docked to the right of the chat; her pose follows each tool: reading → writing → running a command (mock-up)</sub>
 </p>
 
 <p align="center">
-  <img src="docs/images/band.gif" alt="窄螢幕：輸入框上方的面板（示意圖）" width="560"><br>
-  <sub>窄螢幕：輸入框上方的面板，只畫上半身：收到 → 搜尋 → 寫入 → 完成（示意圖）</sub>
+  <img src="docs/images/band.gif" alt="Narrow screen: a pane above the prompt (mock-up)" width="560"><br>
+  <sub>Narrow screen: a pane above the prompt, head and shoulders only: got it → searching → writing → done (mock-up)</sub>
 </p>
 
 <details>
-<summary><b>主要動畫一覽</b></summary>
+<summary><b>Main animations</b></summary>
 
-<p align="center"><img src="docs/images/states.gif" alt="主要動畫" width="636"></p>
+<p align="center"><img src="docs/images/states.gif" alt="Main animations" width="636"></p>
 
-<p align="center"><sub>各動作以 mod 實際的節奏播放；完整清單見下方「事件與動畫」</sub></p>
+<p align="center"><sub>Each one plays at the mod's own pace; the full list is under "Events and animations" below</sub></p>
 
 </details>
 
-> 以上為依 mod 的版面與配色繪製的示意圖（原圖模式），實際外觀依終端機與視窗大小而定。
+> These are mock-ups drawn with the mod's layout and colours (image mode). The real look depends on your terminal and window size.
 
-圖像有兩組圖庫（流暢版 / 經典版），各自有基本動作，另外共用 30 多種新增動作；兩組都已統一髮色、比例與站位。繪製方式有兩種，會自動選擇：
+There are two art sets (smooth / classic), each with its own basic moves, plus 30-odd shared actions; both sets share one hair colour, proportions and stance. She is drawn one of two ways, picked automatically:
 
-| 繪製方式 | 終端機 | 畫質 |
+| Drawing | Terminals | Quality |
 |---|---|---|
-| **原圖**（Image） | Ghostty、kitty、iTerm2 3.5+ | 原始 PNG 像素，最清楚 |
-| **字元畫**（Raster） | 其他支援真彩色的終端機（Warp、Windows Terminal、WezTerm…） | 每格用四分塊字元 `▘▝▖▗▚▞…` 表現 2×2 像素，無法避免失真 |
+| **Image** | Ghostty, kitty, iTerm2 3.5+ | The original PNG pixels, sharpest |
+| **Cells** (Raster) | Any other true-colour terminal (Warp, Windows Terminal, WezTerm…) | Each cell shows 2×2 pixels with quadrant block glyphs `▘▝▖▗▚▞…`; some loss is unavoidable |
 
 ---
 
-## 需求
+## Requirements
 
-| 項目 | 說明 |
+| Item | Notes |
 |---|---|
-| Claude Code | 支援 mods（function hooks）的版本；本 mod 以 2.1.316 開發與測試 |
-| 終端機 | 支援 24-bit 真彩色（Warp、Windows Terminal、iTerm2、WezTerm、Ghostty、kitty 等） |
-| 字型 | 能正常顯示四分塊字元 `▘▝▖▗▚▞▛▜▙▟`（Menlo、SF Mono、Cascadia、JetBrains Mono 等都可以） |
-| 作業系統 | Windows / macOS / Linux（安裝腳本分別為 `install.ps1` / `install.sh`） |
+| Claude Code | A version with mods (function hooks); developed and tested on 2.1.316 |
+| Terminal | 24-bit true colour (Warp, Windows Terminal, iTerm2, WezTerm, Ghostty, kitty…) |
+| Font | Shows the quadrant blocks `▘▝▖▗▚▞▛▜▙▟` (Menlo, SF Mono, Cascadia, JetBrains Mono… all work) |
+| OS | Windows / macOS / Linux (install scripts `install.ps1` / `install.sh`) |
 
-目標裝置**不需要** Python 或 Node；動畫幀已預先轉好，字元畫在 `plugin/hooks/frames-*.ts`，原圖在 `plugin/assets/`。
+The target machine needs **neither** Python nor Node: the frames are pre-built, cells in `plugin/hooks/frames-*.ts`, pictures in `plugin/assets/`.
 
 ---
 
-## 安裝
+## Install
 
-### 從 GitHub 安裝（最簡單）
+### From GitHub (simplest)
 
-在 Claude Code 的提示列輸入：
+At Claude Code's prompt:
 
 ```
 /plugin install claudechan-chibi --marketplace kzger/claudechan-chibi
 ```
 
-或在 shell 裡：
+Or in a shell:
 
 ```bash
 claude plugin install claudechan-chibi --marketplace kzger/claudechan-chibi
 ```
 
-出現 `Add marketplace?` 時按 `y`，選 user scope 後按 Enter 即可。桌面版 App（`/plugin` 不能用時）：點提示框旁的 **+** → Plugins → Add marketplace，輸入 `kzger/claudechan-chibi`，再 Add plugin。
+Answer `y` to `Add marketplace?`, choose the user scope and press Enter. In the desktop app (where `/plugin` is not available): click **+** next to the prompt → Plugins → Add marketplace, enter `kzger/claudechan-chibi`, then Add plugin.
 
-#### 更新到 GitHub 上的新版
+#### Updating to a new version on GitHub
 
 ```bash
 claude plugin marketplace update chibi-local
 claude plugin update claudechan-chibi@chibi-local
 ```
 
-然後在**正在執行的** Claude Code 裡輸入 `/reload-plugins`。
+Then type `/reload-plugins` in the **running** Claude Code.
 
-#### 從舊名稱 chibi-companion 升級（0.3.x 以前）
+If the marketplace update times out on a slow connection, raise git's limit in `~/.claude/settings.json`: `"env": { "CLAUDE_CODE_PLUGIN_GIT_TIMEOUT_MS": "600000" }`.
 
-0.4.0 起 mod 與 repo 都改名為 `claudechan-chibi`。名稱不同，`plugin update` 不會自動換過去，要移除舊的、裝新的：
+#### Upgrading from the old name chibi-companion (0.3.x and earlier)
+
+From 0.4.0 the mod and the repo are named `claudechan-chibi`. Since the name changed, `plugin update` will not switch over by itself: remove the old one and install the new one:
 
 ```bash
 claude plugin uninstall chibi-companion@chibi-local
@@ -85,157 +91,157 @@ claude plugin marketplace update chibi-local
 claude plugin install claudechan-chibi@chibi-local
 ```
 
-舊的 GitHub 網址 `kzger/chibi-companion` 會自動轉到新網址。設定（`/chibi` 的顯示方式、圖庫、繪製方式）是跟著名稱存的，換名後會回到預設值，重新設定一次即可。用 `install.sh` / `install.ps1` 安裝的會自動移除舊名稱。
+The old GitHub URL `kzger/chibi-companion` redirects to the new one. Settings (`/chibi` layout, art set, drawing) are stored under the name, so they go back to the defaults after the rename: set them once more. `install.sh` / `install.ps1` remove the old name automatically.
 
-> `/exit` 再開 `claude` 不一定會重新載入：Claude Code 若以背景常駐（daemon）方式執行，重開只是 `claude attach` 回到同一個程序，記憶體裡仍是舊版 mod。`/reload-plugins` 一定有效。
+> `/exit` and starting `claude` again does not always reload: if Claude Code runs as a background daemon, starting it again just does `claude attach` to the same process, which still holds the old mod in memory. `/reload-plugins` always works.
 
-### 從本機資料夾安裝
+### From a local folder
 
 ### Windows
 
 ```powershell
-cd <本資料夾>
+cd <this folder>
 powershell -ExecutionPolicy Bypass -File .\install.ps1
 ```
 
 ### macOS / Linux / WSL
 
 ```bash
-cd <本資料夾>
+cd <this folder>
 bash install.sh
 ```
 
-（用 zip 搬過來的檔案可能會失去執行權限，所以用 `bash install.sh` 執行最保險。）
+(Files copied over in a zip can lose their execute bit, so `bash install.sh` is the safest way to run it.)
 
-安裝腳本會做三件事：
+The install script does three things:
 
-1. 把 `.claude-plugin/`、`plugin/`、README、ATTRIBUTION 複製到 `~/.claude/local-marketplaces/claudechan-chibi/`
-2. 以這個資料夾註冊本機 marketplace `chibi-local`
-3. 執行 `claude plugin install claudechan-chibi@chibi-local`（預設 `user` scope，所有專案都會出現）
+1. Copies `.claude-plugin/`, `plugin/`, the READMEs and ATTRIBUTION to `~/.claude/local-marketplaces/claudechan-chibi/`
+2. Registers that folder as the local marketplace `chibi-local`
+3. Runs `claude plugin install claudechan-chibi@chibi-local` (the `user` scope by default, so she shows up in every project)
 
-完成後重新啟動 `claude` 即可看到她。
+Restart `claude` afterwards to see her.
 
-| 參數 | PowerShell | Bash |
+| Option | PowerShell | Bash |
 |---|---|---|
-| 只裝在目前專案 | `-Scope project` | `--scope project` |
-| 移除 | `-Uninstall` | `--uninstall` |
-| 更新 | 再執行一次安裝腳本，然後在 Claude Code 內 `/reload-plugins` | 同左 |
+| This project only | `-Scope project` | `--scope project` |
+| Uninstall | `-Uninstall` | `--uninstall` |
+| Update | Run the install script again, then `/reload-plugins` in Claude Code | Same |
 
-### 不想跑腳本？手動安裝
+### No script? Install by hand
 
 ```bash
-claude plugin marketplace add <本資料夾的絕對路徑>
+claude plugin marketplace add <absolute path of this folder>
 claude plugin install claudechan-chibi@chibi-local
 ```
 
-> 這種方式直接讀本資料夾，資料夾不能刪或搬走。
+> This reads this folder directly: do not delete or move it.
 
 ---
 
-## 移植到其他裝置
+## Moving to another machine
 
-1. 複製整個 `claude-chibi-cli` 資料夾（或壓縮成 zip 帶走）。`tools/` 可以不帶，只有重新產生動畫幀時才需要。
-2. 在新裝置上照「安裝」執行對應腳本。
-3. 設定（顯示方式、圖庫）存在各裝置自己的 Claude Code store，不會跟著搬，需要時再用 `/chibi` 設定一次。
+1. Copy the whole `claude-chibi-cli` folder (or zip it). `tools/` can stay behind: it is only needed to rebuild the frames.
+2. On the new machine, run the matching script as in "Install".
+3. Settings (layout, art set) live in each machine's own Claude Code store and do not move with the folder: set them again with `/chibi` if needed.
 
 ---
 
 ## macOS
 
-### 安裝步驟
+### Steps
 
-1. 安裝 Claude Code（已安裝可略過）：`curl -fsSL https://claude.ai/install.sh | bash`，或 `npm install -g @anthropic-ai/claude-code`
-2. 把 `claude-chibi-cli` 資料夾複製到 Mac，例如 `~/claude-chibi-cli`
-3. 執行安裝：
+1. Install Claude Code (skip if you have it): `curl -fsSL https://claude.ai/install.sh | bash`, or `npm install -g @anthropic-ai/claude-code`
+2. Copy the `claude-chibi-cli` folder to the Mac, for example `~/claude-chibi-cli`
+3. Install:
    ```bash
    cd ~/claude-chibi-cli
    bash install.sh
    ```
-4. 用推薦的終端機打開 `claude`。看到原圖代表圖片模式正常；`/chibi` 會顯示目前用的是「原圖」還是「字元」。
+4. Open `claude` in a recommended terminal. If you see the picture, image mode works; `/chibi` tells you whether she is drawn as 原圖 (image) or 字元 (cells).
 
-macOS 第一次執行從其他電腦帶來的檔案，若出現「無法驗證開發者」，執行 `xattr -dr com.apple.quarantine ~/claude-chibi-cli` 即可。
+If macOS says it "cannot verify the developer" the first time you run files brought from another computer, run `xattr -dr com.apple.quarantine ~/claude-chibi-cli`.
 
-### 推薦終端機
+### Recommended terminals
 
-| 終端機 | 繪製方式 | 建議 |
+| Terminal | Drawing | Advice |
 |---|---|---|
-| **Ghostty**（https://ghostty.org） | 原圖（kitty 圖片協定） | **首選**。免費、快，原生支援，不用設定 |
-| **kitty**（https://sw.kovidgoyal.net/kitty） | 原圖 | 很好，設定都寫在設定檔裡 |
-| **iTerm2 3.5+** | 原圖（需要 Claude Code 的 fullscreen 模式，預設就是） | 可用。若只看到空白，執行 `/chibi render cells` |
-| WezTerm、Warp | 字元畫 | 可用，但畫質跟 Windows 上一樣 |
-| Alacritty | 字元畫 | 可用。Alacritty 不支援任何圖片協定，無法顯示原圖；建議執行一次 `/chibi render cells`，省掉每次啟動時的偵測空白。想要原圖可改用 Ghostty（同樣是 GPU 加速、設定檔驅動，習慣最接近） |
-| 內建「終端機」Terminal.app | 字元畫 | 不建議：舊版不支援 24-bit 真彩色，顏色會跑掉 |
+| **Ghostty** (https://ghostty.org) | Image (kitty graphics protocol) | **First choice**. Free, fast, native support, nothing to set up |
+| **kitty** (https://sw.kovidgoyal.net/kitty) | Image | Very good, configured from its config file |
+| **iTerm2 3.5+** | Image (needs Claude Code's fullscreen mode, the default) | Works. If you only see blank space, run `/chibi render cells` |
+| WezTerm, Warp | Cells | Works, at the same quality as on Windows |
+| Alacritty | Cells | Works. Alacritty supports no image protocol, so no pictures; run `/chibi render cells` once to skip the detection gap at every start. For pictures, Ghostty is the closest fit (also GPU-accelerated and configured from a file) |
+| Terminal.app | Cells | Not recommended: older versions lack 24-bit colour, so colours come out wrong |
 
-### 切換原圖／字元畫
+### Switching image / cells
 
-| 指令 | 效果 |
+| Command | Effect |
 |---|---|
-| `/chibi render auto` | 預設。能畫原圖就用原圖，不支援時自動改字元畫 |
-| `/chibi render image` | 強制原圖 |
-| `/chibi render cells` | 強制字元畫（Alacritty 建議設這個，省掉啟動時的偵測空白） |
+| `/chibi render auto` | Default. Pictures where the terminal can draw them, else cells |
+| `/chibi render image` | Always pictures |
+| `/chibi render cells` | Always cells (recommended on Alacritty, to skip the detection gap at start) |
 
-輸入 `/chibi` 可看目前實際狀態，例如「目前畫面 — 面板：原圖，上方列：原圖」。設定會記住，下次啟動沿用。
+Type `/chibi` to see what is actually in use, e.g. 「目前畫面 — 面板：原圖，上方列：原圖」 ("now — pane: image, band: image"). The setting is remembered for the next start.
 
-### Ghostty + tmux（macOS）
+### Ghostty + tmux (macOS)
 
-tmux 只是把圖片「轉交」給外層終端機，外層終端機本身要能畫圖才行：
+tmux only hands pictures on to the outer terminal, which must be able to draw them itself:
 
-| 組合 | 原圖 |
+| Setup | Pictures |
 |---|---|
-| Alacritty + tmux | ✗ 不行（Alacritty 不支援圖片），只能用字元畫 |
-| Ghostty + tmux | ✓ 可以，照下面設定 |
-| Ghostty（不用 tmux） | ✓ 可以，不用設定 |
+| Alacritty + tmux | ✗ No (Alacritty cannot draw pictures): cells only |
+| Ghostty + tmux | ✓ Yes, with the settings below |
+| Ghostty (no tmux) | ✓ Yes, nothing to set up |
 
-**1. 安裝**
+**1. Install**
 
 ```bash
 brew install --cask ghostty
-brew install tmux        # 已安裝可略過；需要 tmux 3.3 以上（tmux -V 查版本）
+brew install tmux        # skip if installed; needs tmux 3.3 or later (check with tmux -V)
 ```
 
-**2. 編輯 `~/.tmux.conf`，加上：**
+**2. Add to `~/.tmux.conf`:**
 
 ```tmux
-# 讓 Claude Code 的圖片穿過 tmux，交給 Ghostty 繪製（原圖模式必需）
+# Let Claude Code's pictures pass through tmux to Ghostty (needed for image mode)
 set -g allow-passthrough on
 set -g focus-events on
 
-# 真彩色（字元畫模式的顏色正確需要）
+# True colour (needed for correct colours in cells mode)
 set -g default-terminal "tmux-256color"
 set -as terminal-features ",xterm-ghostty:RGB"
 ```
 
-**3. 讓設定生效**：舊的 tmux server 不會讀新設定，要整個重開：
+**3. Apply it**: a running tmux server does not read the new settings; restart it:
 
 ```bash
-tmux kill-server   # 會關閉所有 tmux session，先存好工作
+tmux kill-server   # closes every tmux session: save your work first
 tmux
 ```
 
-**4. 確認**：在 tmux 裡啟動 `claude`，輸入 `/chibi`，看到「面板：原圖」即成功。若是「字元」：
+**4. Check**: start `claude` inside tmux and type `/chibi`; 「面板：原圖」 ("pane: image") means it works. If it says 字元 (cells):
 
-- `tmux show -g allow-passthrough` 應顯示 `on`
-- `tmux -V` 應為 3.3 以上
-- 確認外層真的是 Ghostty（在 tmux 外執行 `echo $TERM_PROGRAM` 應顯示 `ghostty`）
+- `tmux show -g allow-passthrough` should print `on`
+- `tmux -V` should be 3.3 or later
+- Make sure the outer terminal really is Ghostty (outside tmux, `echo $TERM_PROGRAM` should print `ghostty`)
 
-### 從 Alacritty + tmux 換到 Ghostty
+### Moving from Alacritty + tmux to Ghostty
 
-tmux 的 session、detach、快捷鍵、`.tmux.conf` 全部照舊沿用，只換外層終端機，再加上第 2 步的設定即可。
+Your tmux sessions, detach, key bindings and `.tmux.conf` all carry over: only the outer terminal changes, plus the settings in step 2.
 
-不想用 tmux 的話，Ghostty 本身也能分割視窗：
+If you would rather not use tmux, Ghostty can split windows itself:
 
-| 動作 | Ghostty 快捷鍵 |
+| Action | Ghostty shortcut |
 |---|---|
-| 左右分割 | `Cmd+D` |
-| 上下分割 | `Cmd+Shift+D` |
-| 切換上一個／下一個分割 | `Cmd+[` ／ `Cmd+]` |
-| 關閉目前分割 | `Cmd+W` |
+| Split left / right | `Cmd+D` |
+| Split top / bottom | `Cmd+Shift+D` |
+| Previous / next split | `Cmd+[` / `Cmd+]` |
+| Close the split | `Cmd+W` |
 
-差別：Ghostty 的分割沒有 tmux 的 **detach**（關掉視窗程式就結束，不能放在背景之後再接回，也不能透過 SSH 接回同一個 session）。習慣 tmux 的話，建議 **Ghostty + tmux**。
+The difference: Ghostty's splits have no **detach** (closing the window ends the programs; you cannot leave them in the background and come back, or reattach over SSH). If you are used to tmux, **Ghostty + tmux** is the better fit.
 
-### tmux 裡顏色偏灰、看不到右側面板
+### Greyish colours and no right-hand pane in tmux
 
-Claude Code 偵測到 tmux 時會做兩件事——把顏色降成 256 色（暖棕色背景變成灰色），以及改用一般（非 fullscreen）畫面，這時面板無法停靠在右側，只能放在輸入框上方。在 `~/.claude/settings.json` 加上下面的 `env`，然後重開 `claude`：
+When Claude Code sees tmux it does two things: it drops to 256 colours (the warm brown background turns grey), and it uses the normal (non-fullscreen) screen, where the pane cannot dock on the right and goes above the prompt instead. Add this `env` to `~/.claude/settings.json` and restart `claude`:
 
 ```json
 {
@@ -246,25 +252,25 @@ Claude Code 偵測到 tmux 時會做兩件事——把顏色降成 256 色（暖
 }
 ```
 
-前提是 tmux 本身已開真彩色（`set -ag terminal-overrides ",xterm-256color:RGB"`）。只想切換畫面模式也可以執行 `/tui fullscreen`。`/chibi` 偵測到這兩種情況時會提示。
+tmux itself must have true colour on (`set -ag terminal-overrides ",xterm-256color:RGB"`). To switch the screen mode only, run `/tui fullscreen`. `/chibi` points both of these out when it sees them.
 
-### tmux 裡動畫時游標狂閃、輸入法組字跟著閃
+### The cursor and IME composition flicker during the animation in tmux
 
-Claude Code 每畫一幀都用「同步更新」包起來（先藏游標、畫圖、再把游標放回輸入框），終端機一次畫完就看不到游標移動。但 tmux 只有在知道外層終端機支援同步更新時才會照做，否則游標的每一步移動都會被畫出來。在 tmux 設定加上（Alacritty 0.13+、Ghostty、kitty、WezTerm、iTerm2 都支援）：
+Claude Code wraps every frame in a "synchronized update" (hide the cursor, draw, put the cursor back in the prompt), so the terminal draws it all at once and the cursor never seems to move. tmux only passes that on when it knows the outer terminal supports synchronized updates; otherwise every cursor move gets drawn. Add to your tmux config (Alacritty 0.13+, Ghostty, kitty, WezTerm and iTerm2 all support it):
 
 ```
 set -as terminal-features ",xterm-256color:sync"
 ```
 
-tmux 是在連線時決定外層終端機的功能，所以要 detach（`prefix` `d`）再 `tmux attach`，或 `tmux kill-server` 重開。用 `tmux display -p '#{client_termfeatures}'` 確認清單裡有 `sync`。
+tmux learns the outer terminal's features when it attaches, so detach (`prefix` `d`) and `tmux attach` again, or `tmux kill-server` and restart. `tmux display -p '#{client_termfeatures}'` should list `sync`.
 
-另外需要 **tmux server 3.8 以上**：3.7 以前的 tmux 自己重畫時，會在同步區塊之外先隱藏游標，所以就算有 `sync` 還是會閃。注意升級 tmux 後，舊的 server 會繼續執行舊版，要 `tmux kill-server` 重開才會換成新版。用 `tmux display -p '#{version}'` 看的是 **server** 的版本（`tmux -V` 只是程式本身的版本）。
+You also need a **tmux server 3.8 or later**: up to 3.7, tmux hides the cursor outside the synchronized block when it redraws on its own, so it flickers even with `sync`. After upgrading tmux the old server keeps running the old version: `tmux kill-server` and restart. `tmux display -p '#{version}'` shows the **server** version (`tmux -V` shows only the program's).
 
-### herdr（取代 tmux）
+### herdr (instead of tmux)
 
-[herdr](https://herdr.dev) 是專為 coding agent 設計的終端機多工器，跟 tmux 一樣能分割視窗、在背景保留 session。它自己解讀 Kitty 圖片協定再交給外層終端機，所以原圖模式**不會有 tmux 那種換圖時的閃爍**。
+[herdr](https://herdr.dev) is a terminal multiplexer built for coding agents: like tmux it splits windows and keeps sessions in the background. It decodes the Kitty graphics protocol itself before handing pictures to the outer terminal, so image mode has **none of tmux's flicker when the picture changes**.
 
-但 Claude Code 在 herdr 裡偵測不到圖片支援（herdr 回報的終端機名稱是 `libghostty`，Claude Code 只認得 `kitty` / `ghostty`），會改用字元畫。要顯示原圖，在 `~/.zshrc` 加上：
+Claude Code, though, cannot detect image support inside herdr (herdr reports the terminal as `libghostty`, and Claude Code knows only `kitty` / `ghostty`), so it falls back to cells. For pictures, add to `~/.zshrc`:
 
 ```zsh
 # Claude Code cannot detect image support inside herdr (it reports "libghostty"),
@@ -274,227 +280,225 @@ if [[ "$TERM_PROGRAM" == "herdr" ]]; then
 fi
 ```
 
-- 只在 herdr 的 pane 裡生效（herdr 會設 `TERM_PROGRAM=herdr`）。**不要**把這個變數寫進 `settings.json`：在不支援圖片的終端機或 tmux 裡，她會變成一塊空白，而且不會自動退回字元畫。
-- 外層終端機要能畫圖（Ghostty、kitty 等）。
-- 加完後要開**新的** pane，或在現有 pane 執行 `exec zsh`：herdr 的背景服務會保留 pane，重開 herdr 時舊 pane 帶的是舊環境。
-- 確認：`echo $CLAUDE_CODE_FORCE_TERMINAL_IMAGES` 顯示 `1`，在 Claude Code 執行 `/chibi render auto` 後，`/chibi` 顯示「面板：原圖」。
+- It applies inside herdr panes only (herdr sets `TERM_PROGRAM=herdr`). Do **not** put this variable in `settings.json`: in a terminal or tmux without picture support she becomes a blank block, with no fallback to cells.
+- The outer terminal must draw pictures (Ghostty, kitty…).
+- Open a **new** pane afterwards, or run `exec zsh` in an existing one: herdr's background service keeps panes, so after restarting herdr old panes still carry the old environment.
+- Check: `echo $CLAUDE_CODE_FORCE_TERMINAL_IMAGES` prints `1`, and after `/chibi render auto` in Claude Code, `/chibi` shows 「面板：原圖」 ("pane: image").
 
 ---
 
-## 使用
+## Usage
 
-| 指令 | 作用 |
+| Command | Effect |
 |---|---|
-| `/chibi` | 顯示目前設定與說明 |
-| `/chibi auto` | **預設**。寬螢幕（fullscreen 且 ≥110 欄）停靠在右側；窄螢幕改成框在輸入框上方的面板。窄螢幕剛啟動時 Claude Code 不讓面板自己放上，會先用上方列，你送出第一則訊息後換成面板 |
-| `/chibi pane` | 強制開面板（手動開啟時任何寬度都可以） |
-| `/chibi band` | 一律放在輸入框上方，不停靠右側。窄螢幕（不到 110 欄，或非 fullscreen）用跟 `auto` 一樣、右上角有 × 的框；寬螢幕 Claude Code 會把面板停靠右側，所以改用上方列（有外框，右側是 Claude Code 自帶的 `[-]`）。剛啟動或視窗剛變窄時也會先用上方列，送出下一則訊息後換成有 × 的框 |
-| `/chibi off` | 不畫圖，只在狀態列顯示文字 |
-| `/chibi set smooth` | 流暢版圖庫（預設，相鄰幀差異小，縮小後較不閃爍） |
-| `/chibi set classic` | 經典版圖庫（表情較生動，例如揮手時張嘴笑） |
-| `/chibi render auto` | **預設**。能畫原圖就用原圖，終端機不支援時自動改成字元畫 |
-| `/chibi render image` | 強制原圖 |
-| `/chibi render cells` | 強制字元畫 |
+| `/chibi` | Show the current settings and help |
+| `/chibi auto` | **Default**. On a wide screen (fullscreen and ≥110 columns) she docks on the right; on a narrow one she sits in a pane framed above the prompt. Right after start on a narrow screen Claude Code does not let the pane place itself, so she uses the band first and switches to the pane after your first message |
+| `/chibi pane` | Always open the pane (opened by hand, it works at any width) |
+| `/chibi band` | Always above the prompt, never docked on the right. On a narrow screen (under 110 columns, or not fullscreen) the same framed pane with × as `auto`; on a wide screen Claude Code would dock the pane on the right, so she uses the band (framed, with Claude Code's own `[-]` on the right). Right after start, or when the window just got narrow, she also uses the band first and switches to the × pane after your next message |
+| `/chibi off` | No picture: text in the status line only |
+| `/chibi set smooth` | The smooth art set (default; neighbouring frames differ little, so it flickers less when small) |
+| `/chibi set classic` | The classic art set (livelier faces, e.g. an open-mouthed smile when waving) |
+| `/chibi render auto` | **Default**. Pictures where possible, else cells |
+| `/chibi render image` | Always pictures |
+| `/chibi render cells` | Always cells |
 
-設定會記住，下次啟動沿用。
+Settings are remembered for the next start.
 
-### 畫面配置
+### Layout
 
-**寬螢幕**：右側面板（fullscreen 模式下停靠在對話旁）
+**Wide screen**: a pane on the right (docked beside the chat in fullscreen mode)
 
 ```
-┌─ chat ───────────────────────────┬─ Claude ちゃん ──────────────────┐
-│ > 幫我重構 auth 模組               │       (動畫 34×18 格)        │
+┌─ chat ───────────────────────────┬─ Claude ちゃん ──────────────┐
+│ > refactor the auth module       │     (animation 34×18 cells)  │
 │ ● Read src/auth.ts               │                              │
-│ ● Edit src/auth.ts               │ ✎ 工作中                      │
-│                                  │ 正在改 auth.ts…               │
-│                                  │ 本輪 7 次工具 · 上輪 2m14s     │
-│                                  │ ── 最近 ──                    │
+│ ● Edit src/auth.ts               │ ✎ 工作中 (working)            │
+│                                  │ 正在改 auth.ts… (editing)     │
+│                                  │ 7 tools this turn · last 2m14s│
+│                                  │ ── recent ──                 │
 │                                  │ ✓ Read auth.ts               │
 │                                  │ ✗ Bash npm test              │
 ```
 
-**窄螢幕**：框在輸入框上方的面板（右上角有 ×；原圖最多 9 行含外框）
+**Narrow screen**: a pane framed above the prompt (× at the top right; in image mode at most 9 rows, frame included)
 
 ```
-│  (動畫 22×12)   ╭──────────────────────────╮
-│  工作時偶爾會    │ ✎ 工作中                  │
-│  在這排走來走去   │ 正在改 auth.ts…           │
-│                 ╰──────────────────────────╯
+│  (anim. 22×12)  ╭──────────────────────────╮
+│  now and then   │ ✎ 工作中 (working)         │
+│  she strolls    │ 正在改 auth.ts…            │
+│  along the row  ╰──────────────────────────╯
 │ > _
 ```
 
-- 上方列空間小，只畫她的上半身（頭到肩膀），臉部比較清楚；側面板畫全身。
-- **原圖模式下大小會跟著視窗變**：側面板最多佔面板寬度的 60%、高度的 40%；上方列約佔終端機高度的 30%，含外框最多 9 行。字元畫模式只有固定兩種尺寸（全身 34×18、半身 22×12），依空間擇一。
-- 圖片是原始 PNG 放大顯示，放得越大會越柔和（不會更清楚）。
-- 上方列會一直顯示。右側的 `[-]` 是 Claude Code 自帶的收合按鈕（mod 無法移除），按下或 `Ctrl+X Ctrl+A` 會收合，再按一次展開。
-- 動畫每次重畫至少間隔 240ms（較快的動作改用跳幀，速度不變）。
-- 動畫時游標或輸入法組字一直閃：終端機沒有開「同步更新」（synchronized output）。tmux 裡尤其常見，見 macOS 的 tmux 說明。
-- 上方列空間不夠時：原圖模式剩 2～6 行會改成「迷你版」（縮小的頭像加一行狀態）；再更少，或字元畫不足 14 行（12 行加外框）時，退回一行文字：`✎ Claude ちゃん · 工作中 正在改 auth.ts…`。
-- 上方列能用的高度由 Claude Code 決定（大約是畫面下半部扣掉輸入框與狀態列）。狀態列很高（例如多行的 claude-hud）或 tmux 分割得很小時，空間會很少。
-- 非 fullscreen 的終端機上，面板會放在輸入框上方，並自動改用精簡排版。
+- The band is small, so it draws only her head and shoulders, where the face reads best; the side pane draws her whole figure.
+- **In image mode she scales with the window**: the side pane uses at most 60% of the pane's width and 40% of its height; the band about 30% of the terminal's height, at most 9 rows with the frame. Cells come in two fixed sizes only (full figure 34×18, bust 22×12), picked by the room there is.
+- Pictures are the original PNGs scaled up: larger means softer, not sharper.
+- The band is always shown. The `[-]` on its right is Claude Code's own collapse button (a mod cannot remove it): click it or press `Ctrl+X Ctrl+A` to collapse, again to expand.
+- The animation redraws at most every 240 ms (faster moves skip frames instead, keeping their speed).
+- If the cursor or IME composition flickers during the animation, the terminal has no "synchronized output". This is common in tmux: see the tmux notes under macOS.
+- When the band has little room: in image mode, 2–6 rows become a "mini" layout (a small face beside one line of status); with less, or under 14 rows in cells mode (12 plus the frame), it falls back to one line of text: `✎ Claude ちゃん · 工作中 正在改 auth.ts…`.
+- How tall the band may be is Claude Code's decision (about the lower half of the screen, less the prompt and status line). A tall status line (e.g. a multi-line claude-hud) or a small tmux split leaves little room.
+- On a terminal without fullscreen, the pane goes above the prompt and uses a compact layout.
 
-### 為什麼寬螢幕的上方列沒有 ×
+### Why the wide-screen band has no ×
 
-有 × 的框是「面板」的外框，輸入框上方列右側的 `[-]` 則是上方列的收合鈕，兩者都由 Claude Code 繪製，mod 只能畫框裡的內容：
+The frame with × belongs to a "pane"; the `[-]` on the right of the band above the prompt is the band's collapse button. Claude Code draws both; a mod draws only what is inside:
 
-- 面板放在哪裡由 Claude Code 決定：fullscreen 且終端機 ≥110 欄時一律停靠右側，否則放在輸入框上方。mod 無法指定位置，把 mod 畫得再寬也一樣。
-- 上方列一定帶 `[-]`，mod 無法移除。
+- Claude Code decides where a pane goes: docked on the right when fullscreen and ≥110 columns, otherwise above the prompt. A mod cannot choose, however wide it draws.
+- The band always has `[-]`; a mod cannot remove it.
 
-所以在寬的 fullscreen 畫面，「停靠右側」與「上方有 × 的框」只能二選一。`"CLAUDE_CODE_NO_FLICKER": "0"`（非 fullscreen）會讓面板在任何寬度都放在輸入框上方，但就不能停靠右側了。本 mod 的做法是：寬螢幕 `/chibi band` 用有外框的上方列，窄螢幕改開有 × 的面板。
+So on a wide fullscreen screen it is either "docked on the right" or "a × frame above the prompt", not both. `"CLAUDE_CODE_NO_FLICKER": "0"` (non-fullscreen) puts the pane above the prompt at any width, but then it can never dock on the right. This mod's choice: `/chibi band` on a wide screen uses the framed band; on a narrow one it opens the × pane.
 
-### 配色
+### Colours
 
-取自角色本身的顏色（髮色橘、奶油色洋裝、棕色書本），面板與上方列自帶背景色，深色或淺色的終端機主題看起來都一樣。所有文字與背景的對比度都在 5.5:1 以上（WCAG AA），狀態一律用「圖示＋文字」標示，不只靠顏色區分。
+Taken from the character herself (orange hair, cream dress, brown book). The pane and the band paint their own background, so she looks the same on dark and light terminal themes. All text has a contrast of at least 5.5:1 against its background (WCAG AA), and states are always marked with an icon and words, never by colour alone.
 
-| 用途 | 色碼 |
+| Use | Colour |
 |---|---|
-| 面板背景 | `#1C1714` |
-| 角色舞台 | `#26201B`（字元畫模式為 `#222222`：Claude Code 畫字元畫時每個色版只有 16 階，舞台跟著用同一色，才不會在角色周圍出現色差） |
-| 對話泡泡（橘色圓角框） | `#33261E`，邊框 `#F08A4B` |
-| 主要文字／次要文字 | `#F3E5D3` ／ `#B9A48F` |
-| 狀態標籤：工作中／等待／出錯／完成／待機 | `#F2C35B` ／ `#8FC1E3` ／ `#F07E6E` ／ `#9CC98A` ／ `#B9A48F` |
+| Pane background | `#1C1714` |
+| Her stage | `#26201B` (`#222222` in cells mode: Claude Code draws cells with 16 levels per channel, so the stage uses one of them to avoid a halo around her) |
+| Speech bubble (orange rounded box) | `#33261E`, border `#F08A4B` |
+| Main / secondary text | `#F3E5D3` / `#B9A48F` |
+| Status chips: working / waiting / error / done / idle | `#F2C35B` / `#8FC1E3` / `#F07E6E` / `#9CC98A` / `#B9A48F` |
 
-要改顏色，修改 `plugin/hooks/register.tsx` 開頭的 `THEME`。
+To change colours, edit `THEME` at the top of `plugin/hooks/register.tsx`.
 
-### 事件與動畫
+### Events and animations
 
-| 動畫 | 何時出現 | 播放方式 |
+| Animation | When | Plays |
 |---|---|---|
-| `waving` 揮手 | 開啟 session | 播三輪 |
-| `redhot` 臉紅 | 打瞌睡時你送出 prompt 或點她（被抓到偷睡） | 播一輪 |
-| `listening` 聆聽 | 你送出 prompt（「收到！」） | 播兩輪 |
-| `thinking` 思考 | 這一輪開始、還沒用任何工具 | 持續 |
-| `running` 閱讀 | Read、只顯示檔案的指令（`cat`、`head`、`sed -n`…），以及下面沒列到的工具 | 持續 |
-| `searching` 拿放大鏡 | Grep、Glob、WebSearch、WebFetch；搜尋類指令（`grep`、`rg`、`find`、`ls`、`git status/log/diff`…） | 持續 |
-| `writing` 寫字 | Edit、Write、NotebookEdit；會改檔案的指令（`>` 寫入檔案、`tee`、`sed -i`、`cp`/`mv`/`mkdir`、寫檔的 Python 腳本…） | 持續 |
-| `busy_left/right` 忙碌 | 其他 Bash／PowerShell 指令：建置、測試、安裝、`git commit` 等（每次換一邊） | 持續 |
-| `delegating` 派工 | Agent | 持續 |
-| `tired` 疲累 | 這一輪超過 10 分鐘 | 持續到這輪結束 |
-| `running-left/right` 走路 | 工作中每 40 秒在上方列左右走一趟（字元畫） | 一趟 |
-| `swamped_left/right` 抱書走路 | 同上，這一輪已用 30 次以上工具 | 一趟 |
-| `waiting` 等待 | 權限確認、AskUserQuestion、計畫核准 | 持續到你回應 |
-| `oops` 糟糕 | 工具出錯 | 播兩輪 |
-| `dizzy` 頭暈 | 這一輪第 3 次以上工具出錯 | 播兩輪 |
-| `sulk` 嘔氣 | 工具被拒絕 | 播兩輪 |
-| `sorry` 抱歉 | 你中斷這一輪 | 播兩輪 |
-| `failed` 失敗 | 這一輪以錯誤結束（API 錯誤等） | 播三輪 |
-| `compact` 打包 | 壓縮對話（`/compact` 或自動） | 持續到壓縮完成 |
-| `proud` 得意 | 這一輪完成 | 播兩輪 |
-| `happy-2` 開心 | 這一輪超過 3 分鐘才完成 | 播兩輪 |
-| `idle-1` 待機 | 沒事時；幾輪後輪流換成 `idle`（原版）、`idle-2`、`idle-3`、`idle-blink`、`hum` 哼歌、`clawd` 抱玩偶 | 持續 |
-| `yawn` → `sleeping-2` 打瞌睡 | 閒置 2 分鐘：打一個哈欠，接著睡著 | 持續 |
-| `angry` 生氣 | 4 秒內點她 3 次（生氣時再點會更久） | 播三輪 |
-| `annoyed` 不耐煩 | 4 秒內第 2 次點她（「別一直戳啦」） | 播一輪 |
-| `forgiven` 原諒 | 生氣結束後 | 播一輪 |
+| `waving` | A session starts | Three loops |
+| `redhot` blushing | You send a prompt or click her while she dozes (caught napping) | One loop |
+| `listening` | You send a prompt (「收到！」 "got it!") | Two loops |
+| `thinking` | The turn has begun but used no tool yet | Until it changes |
+| `running` reading | Read, commands that only show files (`cat`, `head`, `sed -n`…), and tools not listed below | Until it changes |
+| `searching` with a magnifier | Grep, Glob, WebSearch, WebFetch; search commands (`grep`, `rg`, `find`, `ls`, `git status/log/diff`…) | Until it changes |
+| `writing` | Edit, Write, NotebookEdit; commands that change files (`>` into a file, `tee`, `sed -i`, `cp`/`mv`/`mkdir`, a Python script that writes…) | Until it changes |
+| `busy_left/right` | Other Bash / PowerShell commands: builds, tests, installs, `git commit`… (facing the other way each time) | Until it changes |
+| `delegating` | Agent | Until it changes |
+| `tired` | The turn has run over 10 minutes | Until the turn ends |
+| `running-left/right` walking | While working, a walk across the band every 40 s (cells) | One walk |
+| `swamped_left/right` carrying books | As above, once the turn has used 30+ tools | One walk |
+| `waiting` | A permission prompt, AskUserQuestion, a plan approval | Until you answer |
+| `oops` | A tool fails | Two loops |
+| `dizzy` | The 3rd or later tool failure in a turn | Two loops |
+| `sulk` | A tool call is denied | Two loops |
+| `sorry` | You interrupt the turn | Two loops |
+| `failed` | The turn ends in an error (API error…) | Three loops |
+| `compact` packing up | The conversation is compacted (`/compact` or automatic) | Until compaction ends |
+| `proud` | The turn finishes | Two loops |
+| `happy-2` | A turn of 3+ minutes finishes | Two loops |
+| `idle-1` | Nothing going on; every few loops she switches to `idle` (the set's own), `idle-2`, `idle-3`, `idle-blink`, `hum` humming, `clawd` hugging a plush | Until it changes |
+| `yawn` → `sleeping-2` dozing | Idle for 2 minutes: one yawn, then asleep | Until it changes |
+| `angry` | 3 clicks within 4 s (clicking while angry keeps her angry longer) | Three loops |
+| `annoyed` | A 2nd click within 4 s (「別一直戳啦」 "stop poking me") | One loop |
+| `forgiven` | Her anger passes | One loop |
 
-**點她的圖**：每點一次依序換一種反應與台詞（`surprised` 驚訝、`pat-2` 拿書遮臉、`coaxed` 害羞、`hum` 哼歌），播完一輪（至少 1.5 秒）後回到原本的動作與台詞；打瞌睡時點她會臉紅醒來（「啊…被你看到我在打瞌睡了！」）。只有「等你決定」（權限確認等）時不會被打斷。點擊靠的是疊在圖上的透明區域，需要終端機支援滑鼠回報（Ghostty、kitty、iTerm2、WezTerm 等都可以）。
+**Clicking her picture**: each click plays the next reaction and line in turn (`surprised`, `pat-2` hiding behind her book, `coaxed` shy, `hum` humming); after one loop (at least 1.5 s) she goes back to what she was doing and saying. Clicked while dozing she wakes up blushing (「啊…被你看到我在打瞌睡了！」 "ah… you caught me napping!"). Only "waiting for you" (a permission prompt etc.) is never interrupted. Clicks land on a transparent layer over the picture, so the terminal must report mouse events (Ghostty, kitty, iTerm2, WezTerm… all do).
 
-`waving`、`running`、`running-left/right`、`waiting`、`failed`、`angry` 與輪播裡的 `idle` 是各圖庫（流暢版／經典版）原有的動畫；其他動作取自 `image26-v1/`，兩個圖庫共用。共用動作以 [CrossPet（lokicorvus）](https://github.com/lokicorvus/crosspet) 的 Claude 原圖為起始姿勢補繪而成，沿用 CC BY-NC-SA 4.0，署名見 [ATTRIBUTION.txt](ATTRIBUTION.txt)；製作紀錄見 [docs/crosspet-image26-delivery.md](docs/crosspet-image26-delivery.md)，各狀態與動作的對照見 [docs/crosspet-state-replacement.md](docs/crosspet-state-replacement.md)。
+`waving`, `running`, `running-left/right`, `waiting`, `failed`, `angry` and the rotation's `idle` are each art set's own (smooth / classic); the other actions come from `image26-v1/` and are shared by both sets. The shared actions were drawn from [CrossPet (lokicorvus)](https://github.com/lokicorvus/crosspet)'s Claude art as starting poses and keep CC BY-NC-SA 4.0; credits in [ATTRIBUTION.txt](ATTRIBUTION.txt). Production notes in [docs/crosspet-image26-delivery.md](docs/crosspet-image26-delivery.md), and which action plays for which state in [docs/crosspet-state-replacement.md](docs/crosspet-state-replacement.md) (both in Chinese).
 
-`failed` 是以本專案角色動作為參考補繪的六張抱書反應（`tools/build_failed.py`）。`angry` 的原圖是 `tools/build_angry.py` 用叉腰的姿勢圖 `tools/assets/angry-pose.png`（以原角色為參考另外生成）做成的：往前傾兩次，頭上的 Twemoji 💢（CC BY 4.0，署名見 `plugin/ATTRIBUTION.txt`）一跳一跳。字元畫模式的生氣幀由同一組原圖轉成。
+`failed` is six book-hugging reactions drawn with this project's own poses as reference (`tools/build_failed.py`). `angry`'s pictures are made by `tools/build_angry.py` from a hands-on-hips pose, `tools/assets/angry-pose.png` (generated separately with the character as reference): she leans forward twice while Twemoji's 💢 (CC BY 4.0, credited in `plugin/ATTRIBUTION.txt`) throbs above her head. Its cells are converted from the same pictures.
 
-0.5.2 起，三組原圖（`smooth`、`classic`、`extra`）都換成 `tools/assets/plugin-assets-corrected-v1/` 的修正版：統一髮色、人物比例與站位（一般站姿身體中心 x=91、腳底 y=178），兩個圖庫的畫布也統一為全身 186×184、上半身 130×125。`sorry`、`stretch`、`clawd`、`delegating`、`compact` 為重新繪製的姿勢。修正紀錄見 [docs/plugin-assets-corrections-v1-delivery.md](docs/plugin-assets-corrections-v1-delivery.md)。
+From 0.5.2 all three picture sets (`smooth`, `classic`, `extra`) are the corrected ones from `tools/assets/plugin-assets-corrected-v1/`: one hair colour, proportions and stance (standing poses centred at x=91 with feet at y=178), and one canvas for both sets, 186×184 full figure and 130×125 bust. `sorry`, `stretch`, `clawd`, `delegating` and `compact` were redrawn. Notes in [docs/plugin-assets-corrections-v1-delivery.md](docs/plugin-assets-corrections-v1-delivery.md) (in Chinese).
 
-同時符合多個狀態時，顯示哪一個由 `plugin/hooks/mood.ts` 的 `pickState()` 決定。
+When several states apply at once, `pickState()` in `plugin/hooks/mood.ts` picks which one shows.
 
 ---
 
-## 自訂
+## Customising
 
-| 想改什麼 | 檔案 |
+| To change | File |
 |---|---|
-| 狀態優先順序、疲累的門檻 | `plugin/hooks/mood.ts` → `pickState()`、`TIRED_AFTER_MS` |
-| 各工具的姿勢、待機輪播、共用動作的節奏 | `plugin/hooks/register.tsx` → `TOOL_ANIM`、`IDLE_ROTATION`、`EXTRA_TIMING` |
-| Bash 指令怎麼分成寫入／搜尋／閱讀／執行 | `plugin/hooks/shell.ts` → `SEARCH`、`READ`、`WRITE`、`GIT_LOOK` |
-| 對話泡泡文字、各工具的描述 | `plugin/hooks/register.tsx` → `describeTool()`、`TITLE` |
-| 收起、打瞌睡、散步、頭暈與抱書走路的門檻 | `plugin/hooks/register.tsx` 開頭的常數 |
-| 點擊的反應、台詞、生氣的門檻 | `plugin/hooks/register.tsx` → `POKES`、`ANGRY_LINES`、`POKE_ANGRY_AT`、`POKE_WINDOW_MS` |
-| 換掉某個動作的圖 | 修改 `tools/assets/plugin-assets-corrected-v1/<圖庫>/<動作>/` 的 PNG（尺寸維持 186×184／130×125），再執行 `tools/build_corrected.py` |
-| 字元畫尺寸、色數 | `tools/build_frames.py` 的 `SIZES`（字元畫）、`IMAGE_ROWS`（原圖），改完執行 `tools/build_corrected.py` |
-| 配色 | `plugin/hooks/register.tsx` 的 `THEME` |
+| State priority, the tired threshold | `plugin/hooks/mood.ts` → `pickState()`, `TIRED_AFTER_MS` |
+| Each tool's pose, the idle rotation, the shared actions' timing | `plugin/hooks/register.tsx` → `TOOL_ANIM`, `IDLE_ROTATION`, `EXTRA_TIMING` |
+| How Bash commands count as writing / searching / reading / running | `plugin/hooks/shell.ts` → `SEARCH`, `READ`, `WRITE`, `GIT_LOOK` |
+| Bubble text, each tool's description | `plugin/hooks/register.tsx` → `describeTool()`, `TITLE` |
+| Thresholds for collapsing, dozing, strolling, dizziness, carrying books | The constants at the top of `plugin/hooks/register.tsx` |
+| Click reactions, lines, the anger threshold | `plugin/hooks/register.tsx` → `POKES`, `ANGRY_LINES`, `POKE_ANGRY_AT`, `POKE_WINDOW_MS` |
+| Replace an action's pictures | Edit the PNGs in `tools/assets/plugin-assets-corrected-v1/<set>/<action>/` (keep 186×184 / 130×125), then run `tools/build_corrected.py` |
+| Cell sizes, colour count | `SIZES` (cells) and `IMAGE_ROWS` (pictures) in `tools/build_frames.py`, then run `tools/build_corrected.py` |
+| Colours | `THEME` in `plugin/hooks/register.tsx` |
 
-重新產生 README 的示意圖（需要 Python 3 + Pillow，以及含繁中與日文假名的字型，macOS 內建的 PingFang 即可）：
+To redraw the README's pictures (needs Python 3 + Pillow and a font with Traditional Chinese and kana; macOS's PingFang will do):
 
 ```bash
-python tools/make_readme_images.py            # 寫到 docs/images/
+python tools/make_readme_images.py            # writes to docs/images/
 ```
 
-重新產生動畫幀（需要 Python 3 + Pillow + NumPy）：
+To rebuild the frames (needs Python 3 + Pillow + NumPy):
 
 ```bash
-# 從修正版 PNG 安裝三組原圖到 plugin/assets/，並重建 frames-smooth/classic/extra.ts
+# install the corrected PNGs into plugin/assets/ and rebuild frames-smooth/classic/extra.ts
 uv run --with pillow --with numpy python tools/build_corrected.py
 ```
 
-`tools/assets/plugin-assets-corrected-v1/`、`image26-v1/` 等製作素材只保存在製作端，不在 git 裡（repo 保持精簡，marketplace 更新才快）；從 GitHub clone 下來的只有 `plugin/assets/` 的成品。
+Production art such as `tools/assets/plugin-assets-corrected-v1/` and `image26-v1/` stays on the production machine and is not in git (keeping the repo small keeps marketplace updates fast); a clone from GitHub holds only the finished `plugin/assets/`.
 
-`build_frames.py`、`build_extra.py`、`build_angry.py` 是從舊來源（Codex 精靈圖、`image26-v1/`、叉腰姿勢圖）產生的舊流程，會覆蓋修正版，所以預設拒絕執行；真的要用時加 `--overwrite-corrected`。`build_failed.py` 也會改寫 `failed` 的原圖與字元幀，同樣不要在修正版上執行。
+`build_frames.py`, `build_extra.py` and `build_angry.py` are the old pipeline from the old sources (the Codex spritesheets, `image26-v1/`, the hands-on-hips pose). They would overwrite the corrected art, so they refuse to run unless given `--overwrite-corrected`. `build_failed.py` also rewrites `failed`'s pictures and cells: do not run it over the corrected art either.
 
-修改後的檢查：
+Checks after a change:
 
 ```bash
-claude plugin validate plugin     # 檢查 manifest 與 hooks
-claude plugin test plugin         # 執行 plugin/tests 的繪製測試
+claude plugin validate plugin     # manifest and hooks
+claude plugin test plugin         # the tests in plugin/tests
 ```
 
 ---
 
-## 疑難排解
+## Troubleshooting
 
-| 狀況 | 處理 |
+| Problem | Fix |
 |---|---|
-| 完全沒出現 | `claude plugin list` 確認 `claudechan-chibi@chibi-local` 已啟用；用 `claude --debug` 啟動，搜尋 `claudechan-chibi` |
-| 面板沒開 | 終端機寬度不到 144 欄時，自動模式不會開面板，會改用上方列；可用 `/chibi pane` 強制開啟 |
-| 面板只出現在輸入框上方、不在右側 | 不是 fullscreen 畫面（tmux 預設如此）：執行 `/tui fullscreen`，或設定 `CLAUDE_CODE_NO_FLICKER=1`（見 macOS 的 tmux 說明） |
-| 動畫時游標一直閃、輸入法組字跟著閃 | tmux 沒開同步更新，或 tmux server 早於 3.8：加 `set -as terminal-features ",xterm-256color:sync"`，並確認 `tmux display -p '#{version}'` ≥ 3.8，否則 `tmux kill-server` 重開（見 macOS 的 tmux 說明） |
-| herdr 裡只有字元畫、沒有原圖 | Claude Code 偵測不到 herdr 的圖片支援：見 macOS 的 herdr 說明，設定 `CLAUDE_CODE_FORCE_TERMINAL_IMAGES` |
-| tmux 裡原圖模式偶爾閃一下 | Claude Code 在 tmux 裡每一幀都用同一個圖片 id、分段重傳整張 PNG，這些資料經 tmux 直接轉給終端機、不在同步更新內，換圖途中可能短暫空白。不在 tmux 裡執行 `claude`（直接用 Ghostty，或改用 herdr）可避免；或改用 `/chibi render cells` |
-| tmux 裡配色偏灰、跟其他終端機差很多 | Claude Code 在 tmux 裡只用 256 色：設定 `CLAUDE_CODE_TMUX_TRUECOLOR=1`（見 macOS 的 tmux 說明） |
-| Mac 上只看到空白、沒有圖 | 終端機不支援圖片，或 tmux 沒設定 passthrough；執行 `/chibi render cells` 改用字元畫，或換 Ghostty |
-| 圖案有細縫或格線 | 終端機用字型畫方塊字元而不是自己繪製；換字型，或調整行距為 1.0 |
-| 顏色怪、出現色塊 | 終端機沒開真彩色；tmux 使用者見上方「Ghostty + tmux」第 2 步的真彩色設定 |
-| 圖案比例扁或長 | 字型行高不是 1:2；換一個等寬字型，或把行距設回 1.0 |
-| 想暫時關掉 | `/chibi off`，或 `claude plugin disable claudechan-chibi@chibi-local` |
+| She never shows up | `claude plugin list` should show `claudechan-chibi@chibi-local` enabled; start with `claude --debug` and search for `claudechan-chibi` |
+| The pane does not open | Under 144 columns auto mode uses the band instead of opening the pane; `/chibi pane` forces it open |
+| The pane appears above the prompt, not on the right | Not a fullscreen screen (tmux's default): run `/tui fullscreen`, or set `CLAUDE_CODE_NO_FLICKER=1` (see the tmux notes under macOS) |
+| The cursor or IME composition flickers during the animation | tmux has no synchronized updates, or the tmux server is older than 3.8: add `set -as terminal-features ",xterm-256color:sync"` and check `tmux display -p '#{version}'` ≥ 3.8, else `tmux kill-server` and restart (see the tmux notes under macOS) |
+| Only cells inside herdr, no pictures | Claude Code cannot detect herdr's image support: see the herdr notes under macOS and set `CLAUDE_CODE_FORCE_TERMINAL_IMAGES` |
+| In tmux, image mode blinks now and then | In tmux Claude Code reuses one image id for every frame and resends the whole PNG in chunks; tmux passes these straight to the terminal outside the synchronized update, so the picture may go blank for a moment while it changes. Run `claude` outside tmux (Ghostty directly, or herdr), or use `/chibi render cells` |
+| In tmux the colours are greyish, unlike other terminals | Claude Code uses 256 colours inside tmux: set `CLAUDE_CODE_TMUX_TRUECOLOR=1` (see the tmux notes under macOS) |
+| Only blank space on a Mac, no picture | The terminal cannot draw pictures, or tmux has no passthrough: run `/chibi render cells`, or switch to Ghostty |
+| Thin gaps or grid lines in the picture | The terminal draws block glyphs from the font instead of itself: change the font, or set the line spacing to 1.0 |
+| Odd colours, blotches | The terminal has no true colour; tmux users see step 2 of "Ghostty + tmux" above |
+| The picture looks squashed or stretched | The font's cell is not 1:2: use another monospace font, or set the line spacing back to 1.0 |
+| Turn her off for a while | `/chibi off`, or `claude plugin disable claudechan-chibi@chibi-local` |
 
 ---
 
-## 檔案結構
+## Files
 
 ```
 claude-chibi-cli/
-├─ .claude-plugin/marketplace.json   本機 marketplace（chibi-local）
-├─ plugin/                           mod 本體（claudechan-chibi）
+├─ .claude-plugin/marketplace.json   the local marketplace (chibi-local)
+├─ plugin/                           the mod (claudechan-chibi)
 │  ├─ .claude-plugin/plugin.json
 │  ├─ hooks/hooks.json
-│  ├─ hooks/register.tsx             事件、狀態機、面板與上方列的繪製
-│  ├─ hooks/mood.ts                  pickState()：狀態優先順序
-│  ├─ hooks/poke.tsx                 疊在圖上的透明點擊區（Client）
-│  ├─ hooks/sprite.ts                幀解碼 → Raster 四分塊字元
-│  ├─ hooks/shell.ts                 依 Bash 指令內容決定姿勢
-│  ├─ hooks/frames-smooth.ts         流暢版字元畫動畫幀（自動產生）
-│  ├─ hooks/frames-classic.ts        經典版字元畫動畫幀（自動產生）
-│  ├─ hooks/frames-extra.ts          共用動作的字元畫動畫幀（自動產生）
-│  ├─ assets/<圖庫>/<動作>/<n>.png    原圖動畫幀，全身（自動產生）
-│  ├─ assets/<圖庫>/<動作>/<n>-bust.png  原圖動畫幀，上半身（上方列用）
-│  ├─ assets/extra/<動作>/            共用動作的原圖動畫幀（兩個圖庫共用）
-│  ├─ types/index.d.ts               $.state 型別契約
-│  └─ tests/render.test.tsx          繪製測試
-├─ tools/build_corrected.py          修正版 PNG → plugin/assets 與字元畫動畫幀
-├─ tools/build_frames.py             （舊流程）精靈圖 → 動畫幀轉換；字元畫的共用函式
-├─ tools/build_angry.py              （舊流程）叉腰姿勢圖 → 生氣動畫幀
-├─ tools/build_extra.py              （舊流程）image26-v1 → 共用動作的動畫幀
-├─ tools/assets/plugin-assets-corrected-v1/  修正版原圖（目前的素材來源）
-├─ tools/assets/                     生氣動畫的素材（叉腰姿勢、Twemoji 💢）
-├─ tools/make_readme_images.py       README 示意圖產生器
-├─ docs/images/                      README 的示意 GIF
-├─ install.ps1 / install.sh          安裝、更新、移除
-├─ ATTRIBUTION.txt                   素材來源與授權
-└─ README.md
+│  ├─ hooks/register.tsx             events, state machine, drawing the pane and the band
+│  ├─ hooks/mood.ts                  pickState(): state priority
+│  ├─ hooks/poke.tsx                 the transparent click layer over the picture (Client)
+│  ├─ hooks/sprite.ts                frame decoding → Raster quadrant cells
+│  ├─ hooks/shell.ts                 her pose from a Bash command's text
+│  ├─ hooks/frames-smooth.ts         smooth set cells (generated)
+│  ├─ hooks/frames-classic.ts        classic set cells (generated)
+│  ├─ hooks/frames-extra.ts          shared actions' cells (generated)
+│  ├─ assets/<set>/<action>/<n>.png      picture frames, full figure (generated)
+│  ├─ assets/<set>/<action>/<n>-bust.png picture frames, bust (for the band)
+│  ├─ assets/extra/<action>/         shared actions' picture frames (both sets)
+│  ├─ types/index.d.ts               the $.state type contract
+│  └─ tests/                         tests (drawing, shell commands)
+├─ tools/build_corrected.py          corrected PNGs → plugin/assets and the cells
+├─ tools/build_frames.py             (old) spritesheet → frames; shared cell helpers
+├─ tools/build_angry.py              (old) hands-on-hips pose → angry frames
+├─ tools/build_extra.py              (old) image26-v1 → shared actions' frames
+├─ tools/make_readme_images.py       the README pictures
+├─ docs/images/                      the README's GIFs
+├─ install.ps1 / install.sh          install, update, uninstall
+├─ ATTRIBUTION.txt                   art sources and licences
+└─ README.md / README.zh-TW.md / README.ja.md   this guide (English / 繁體中文 / 日本語)
 ```
 
 ---
 
-## 授權
+## License
 
-角色原畫：CrossPet（lokicorvus），**CC BY-NC-SA 4.0**。本 mod 的動畫幀為改作，沿用相同授權：須保留署名、限非商業用途、以相同授權分享。詳見 `ATTRIBUTION.txt`。
+Character art: CrossPet (lokicorvus), **CC BY-NC-SA 4.0**. This mod's frames are an adaptation under the same license: keep the credit, non-commercial use only, share alike. See `ATTRIBUTION.txt`.

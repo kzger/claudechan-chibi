@@ -57,7 +57,7 @@ echo "複製檔案到 $DEST"
 rm -rf "$DEST"
 mkdir -p "$DEST"
 cp -R "$SRC/.claude-plugin" "$SRC/plugin" "$DEST/"
-for f in README.md ATTRIBUTION.txt; do [ -e "$SRC/$f" ] && cp "$SRC/$f" "$DEST/"; done
+for f in README.md README.zh-TW.md README.ja.md ATTRIBUTION.txt; do [ -e "$SRC/$f" ] && cp "$SRC/$f" "$DEST/"; done
 rm -rf "$DEST/plugin/.claude-plugin/types"
 
 echo "註冊本機 marketplace"
