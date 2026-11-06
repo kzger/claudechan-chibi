@@ -8,12 +8,12 @@
 - 60 支 `<動作>.gif`：186×184 px，與插件 `plugin/assets/<圖庫>/<狀態>/<n>.png` 尺寸相同。
 - 60 支 `<動作>-bust.gif`：130×125 px，與插件 `<n>-bust.png` 尺寸相同。
 - 354 張全身 RGBA PNG + 354 張 Bust RGBA PNG，共 708 張影格，位於 `image26-v1/<動作>/<n>.png` 與 `<n>-bust.png`。
-- 每個動作資料夾有 `timing.json`、`contact.png`（PNG 影格總覽）和 `gif-contact.png`（GIF 解碼後的影格總覽）。
+- 每個動作資料夾有 `timing.json`、`contact.png`（PNG 影格總覽）和 `gif-contact.png`（GIF 解碼後的影格總覽）。總覽圖只留在製作端，沒有進 git（見下方「容量」）。
 - 姿勢表與提示詞保存在 `image26-v1/sheets/`；`generation.json` 對每個動作記錄實際提示詞檔、來源姿勢表、時序、縮放、CV 參數與 GIF SHA-256。
 - 兩張 portrait 各自去背生成；avatar 保留頭像構圖。探頭保留原始截邊。
 - 來源 WebP 在 [`tools/assets/crosspet/claude/webp/`](../tools/assets/crosspet/claude/webp/)，共 60 張。
 
-全部動作預覽與修正前後對照的 HTML（`crosspet-image26-preview.html`、`crosspet-image26-stabilization-review.html`）及截圖目錄 `docs/crosspet-image26-inspection/` 沒有隨素材交付，Repo 內找不到。要看單一動作，請直接開 `image26-v1/<動作>.gif` 或該動作資料夾的 `contact.png`。
+全部動作預覽與修正前後對照的 HTML（`crosspet-image26-preview.html`、`crosspet-image26-stabilization-review.html`）及截圖目錄 `docs/crosspet-image26-inspection/` 沒有隨素材交付，Repo 內找不到。要看單一動作，請直接開 `image26-v1/<動作>.gif`。
 
 ## 工具及模型
 
@@ -42,3 +42,5 @@
 ## 容量
 
 `image26-v1/` 共約 424 MB，其中 `revisions/` 約 167 MB、`sheets/` 約 129 MB。各動作資料夾的 708 張 PNG 合計約 30 MB，接入插件只需要這部分。
+
+進 git 的只有：708 張影格、120 支 GIF（約 11 MB）、各動作的 `timing.json` 與根目錄的紀錄 JSON，合計約 41 MB。`revisions/`、`sheets/` 與各資料夾的 `contact.png`、`gif-contact.png`、`contact-review.png`、`comparison.png`（約 72 MB）列在 `.gitignore`，只保存在製作端；`generation.json` 指向這些檔案的路徑在 Repo 內找不到。

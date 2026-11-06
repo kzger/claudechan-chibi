@@ -2,3 +2,11 @@ plugin/tsconfig.json
 plugin/.claude-plugin/types/
 .DS_Store
 tools/__pycache__/
+
+# image26-v1：只收 60 個動作的影格、GIF 與紀錄 JSON；歷史版本、姿勢表與總覽圖留在本機
+image26-v1/revisions/
+image26-v1/sheets/
+image26-v1/*/contact.png
+image26-v1/*/gif-contact.png
+image26-v1/*/contact-review.png
+image26-v1/*/comparison.png
