@@ -1,6 +1,6 @@
 {
   "name": "claudechan-chibi",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "description": "Claude ちゃん Q 版動畫陪伴：寬螢幕側面板、窄螢幕輸入框上方列，依 Claude Code 事件與工具切換動作，點她會有反應、點太快會生氣。",
   "author": { "name": "kzger" },
   "license": "CC-BY-NC-SA-4.0",

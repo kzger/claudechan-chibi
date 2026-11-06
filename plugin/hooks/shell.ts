@@ -39,12 +39,16 @@ const WRITE = new Set([
 /** git subcommands that only look: the rest (commit, push, checkout…) run. */
 const GIT_LOOK = new Set(['status', 'log', 'diff', 'show', 'blame', 'grep', 'ls-files', 'branch', 'remote', 'rev-parse', 'describe', 'shortlog', 'reflog', 'count-objects', 'cat-file', 'ls-tree'])
 /** A script that writes: Python / Node / Ruby file writes, in a heredoc or -c / -e. */
-const SCRIPT_WRITES = /\.write_text\(|\.write_bytes\(|\.write\(|open\([^)]*['"][wax]b?\+?['"]|shutil\.(copy|move)|os\.(replace|rename|remove)|writeFileSync|writeFile\(|File\.write/
+const SCRIPT_WRITES = /\.write_text\(|\.write_bytes\(|\.write\(|open\([^)\n]{0,200}['"][wax]b?\+?['"]|shutil\.(copy|move)|os\.(replace|rename|remove)|writeFileSync|writeFile\(|File\.write/
+
+/** Longer commands are judged on their start: keeps every regex below cheap on any input. */
+const MAX_COMMAND = 8192
 
 export function shellWork(command: string): ShellWork {
+  command = command.slice(0, MAX_COMMAND)
   // Heredoc bodies hold scripts or text, not shell: judge them apart.
   const bodies: string[] = []
-  let text = command.replace(/<<-?\s*(['"]?)([A-Za-z_][\w]*)\1([^\n]*)\n([\s\S]*?)\n\s*\2\s*(?=\n|$)/g, (_m, _q, _tag, rest: string, body: string) => {
+  let text = command.replace(/<<-?\s*(['"]?)([A-Za-z_][\w]*)\1([^\n]*)\n([\s\S]*?)\n[ \t]*\2[ \t]*(?=\n|$)/g, (_m, _q, _tag, rest: string, body: string) => {
     bodies.push(body)
     return ` ${rest}`
   })

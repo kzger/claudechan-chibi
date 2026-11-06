@@ -40,3 +40,11 @@ test('a shell command gets the pose of what it does', () => {
     expect([command, shellWork(command)]).toEqual([command, work])
   }
 })
+
+test('a huge or hostile command is judged quickly', () => {
+  const start = Date.now()
+  shellWork('cat <<EOF\n' + ' \n'.repeat(200_000))
+  shellWork('python3 -c "open(' + '('.repeat(100_000) + '"')
+  shellWork('x'.repeat(1_000_000))
+  expect(Date.now() - start < 1_000).toBe(true)
+})

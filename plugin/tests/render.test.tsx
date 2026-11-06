@@ -232,7 +232,8 @@ test('she yawns, then sleeps: the doze plays the shared frames', async ($, on) =
   })
   await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
   const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
-  await clock.advance(121_000)
+  // The doze begins at the first frame after 2 minutes: an idle frame may hold up to ~2 s.
+  await clock.advance(123_000)
   expect(paths.some(p => p.includes('/assets/extra/yawn/'))).toBe(true)
   await clock.advance(10_000)
   expect(paths.some(p => p.includes('/assets/extra/sleeping-2/'))).toBe(true)
@@ -264,11 +265,14 @@ test('caught dozing she blushes, whether a click or a prompt wakes her', async (
   expect(blushed()).toBe(true)
   expect(await ui.find({ type: 'Text', text: /被你看到我在打瞌睡了/ })).toBeDefined()
 
+  // Asleep again; this time your prompt wakes her. Frames may come from the
+  // PNG cache now, so look at her chip rather than at the files read.
   paths.length = 0
   await clock.advance(125_000)
+  expect(await ui.find({ type: 'Text', text: /打瞌睡/ })).toBeDefined()
   await $.prompt.submit({ text: 'hi' })
   await clock.settle()
-  expect(blushed()).toBe(true)
+  expect(await ui.find({ type: 'Text', text: /醒來了/ })).toBeDefined()
   expect(paths.some(p => p.includes('/assets/extra/stretch/'))).toBe(false)
   await ui.unmount()
 })
