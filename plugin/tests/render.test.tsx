@@ -309,6 +309,13 @@ test('each tool puts her in its pose; Read keeps the set’s own', async ($, on)
   expect(await title(/搜尋中/)).toBe(true)
   await $.tool.call({ tool: 'Bash', command: 'npm test' })
   expect(await title(/執行中/)).toBe(true)
+  // anything sent to run in the background is delegating
+  await $.tool.call({ tool: 'Bash', command: 'npm test', run_in_background: true })
+  expect(await title(/派工中/)).toBe(true)
+  await $.tool.call({ tool: 'Read', file_path: '/a.ts' })
+  expect(await title(/工作中/)).toBe(true)
+  await $.tool.call({ tool: 'Monitor', description: 'deploy log', timeout_ms: 60_000, command: 'tail -f log' })
+  expect(await title(/派工中/)).toBe(true)
   await ui.unmount()
 })
 

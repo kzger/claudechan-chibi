@@ -2,7 +2,7 @@
 
 <p align="center"><b>English</b> · <a href="README.zh-TW.md">繁體中文</a> · <a href="README.ja.md">日本語</a></p>
 
-**Current version: 0.5.5** (2026-11-06)
+**Current version: 0.5.6** (2026-11-06)
 
 A chibi Claude-chan (Claude ちゃん) who lives in Claude Code's terminal UI. She changes her animation to match what Claude is doing: thinking, searching, writing files, running commands, sending out helpers, waiting for your approval, failing, finishing… When nothing is going on she shifts her pose, hums, yawns and falls asleep. Click her picture and she reacts; click too fast and she gets cross.
 On a wide screen she sits in a pane on the right; on a narrow one she stands above the prompt.
@@ -375,7 +375,7 @@ To change colours, edit `THEME` at the top of `plugin/hooks/register.tsx`.
 | `searching` with a magnifier | Grep, Glob, WebSearch, WebFetch; search commands (`grep`, `rg`, `find`, `ls`, `git status/log/diff`…) | Until it changes |
 | `writing` | Edit, Write, NotebookEdit; commands that change files (`>` into a file, `tee`, `sed -i`, `cp`/`mv`/`mkdir`, a Python script that writes…) | Until it changes |
 | `busy_left/right` | Other Bash / PowerShell commands: builds, tests, installs, `git commit`… (facing the other way each time) | Until it changes |
-| `delegating` | Agent | Until it changes |
+| `delegating` | Handing work off to run on its own: Agent, a Bash command run in the background, Workflow, Monitor, CronCreate, SendMessage, SendToProject, RemoteTrigger `run` | Until it changes |
 | `tired` | The turn has run over 10 minutes | Until the turn ends |
 | `running-left/right` walking | While working, a walk across the band every 40 s (cells) | One walk |
 | `swamped_left/right` carrying books | As above, once the turn has used 30+ tools | One walk |

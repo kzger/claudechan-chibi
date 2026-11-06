@@ -89,8 +89,15 @@ const TOOL_ANIM: Record<string, AnimName> = {
   MultiEdit: 'writing',
   Write: 'writing',
   NotebookEdit: 'writing',
+  // Handing work to someone or something that runs on its own: a helper, a
+  // background job, a scheduled task, another agent or project.
   Agent: 'delegating',
   Task: 'delegating',
+  Workflow: 'delegating',
+  Monitor: 'delegating',
+  CronCreate: 'delegating',
+  SendMessage: 'delegating',
+  SendToProject: 'delegating',
 }
 /** Poses that mean she is working: the band's stroll starts from these. */
 const WORK_ANIMS = new Set<AnimName>(['running', 'thinking', 'searching', 'writing', 'busy_left', 'busy_right', 'delegating', 'tired'])
@@ -391,11 +398,14 @@ function clip(text: string, n: number): string {
 }
 
 /**
- * Her pose while a tool runs: TOOL_ANIM; a shell command by what it does
- * (shell.ts): writing files, searching, reading, or else the busy pose,
- * facing the other way each time.
+ * Her pose while a tool runs: TOOL_ANIM; anything sent to run in the
+ * background is delegating; a shell command by what it does (shell.ts):
+ * writing files, searching, reading, or else the busy pose, facing the other
+ * way each time.
  */
 function toolAnim(tool: string, fields: Record<string, unknown>): AnimName {
+  if (fields.run_in_background === true) return 'delegating' // a background job: handed off, not done here
+  if (tool === 'RemoteTrigger' && fields.action === 'run') return 'delegating'
   if (tool === 'Bash' || tool === 'PowerShell') {
     const work = shellWork(String(fields.command ?? ''))
     if (work === 'writing') return 'writing'
@@ -423,7 +433,20 @@ function describeTool(tool: string, e: Record<string, unknown>): { verb: string;
       return { verb: '正在找', target: clip(String(e.pattern ?? ''), 24) }
     case 'Bash':
     case 'PowerShell':
-      return { verb: '正在執行', target: clip(String(e.description ?? e.command ?? ''), 28) }
+      return {
+        verb: e.run_in_background === true ? '交給背景執行' : '正在執行',
+        target: clip(String(e.description ?? e.command ?? ''), 28),
+      }
+    case 'Workflow':
+      return { verb: '派出工作流程', target: clip(String(e.description ?? e.name ?? ''), 24) }
+    case 'Monitor':
+      return { verb: '派人盯著', target: clip(String(e.description ?? ''), 24) }
+    case 'CronCreate':
+      return { verb: '排定任務', target: clip(String(e.cron ?? ''), 24) }
+    case 'SendMessage':
+      return { verb: '交代給', target: clip(String(e.to ?? ''), 24) }
+    case 'SendToProject':
+      return { verb: '交給專案', target: clip(String(e.project_name ?? ''), 24) }
     case 'WebSearch':
       return { verb: '正在搜尋', target: clip(String(e.query ?? ''), 24) }
     case 'WebFetch':

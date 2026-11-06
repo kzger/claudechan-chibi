@@ -27,7 +27,7 @@ Claude Code 的 function hooks mod：依事件切換 Claude ちゃん的動畫�
 - 素材格式：全身 186×184、Bust 130×125（全身的固定裁切）；兩組圖庫與 `extra` 共用同一舞台（一般站姿身體中心 x=91、腳底 y=178）。
 - 動畫名稱：`StateName` 是各圖庫自己的狀態，`ExtraName` 是放在 `assets/extra/`、兩組共用的動作；新增動作要同時改 `sprite.ts` 的型別、`register.tsx` 的 `EXTRA_LOOK`（標籤）與觸發邏輯。
 - 狀態優先順序只在 `mood.ts` 的 `pickState()` 決定；`register.tsx` 只設旗標（`...Until` 時間戳）。
-- 各工具的姿勢：`TOOL_ANIM`；Bash／PowerShell 依 `shell.ts`，其餘指令輪流播 `busy_left`／`busy_right`。
+- 各工具的姿勢：`TOOL_ANIM`；指派背景工作（`run_in_background`、`Agent`、`Workflow`、`Monitor`、`CronCreate`、`SendMessage`、`SendToProject`、`RemoteTrigger` 的 `run`）一律 `delegating`；其餘 Bash／PowerShell 依 `shell.ts`，執行類指令輪流播 `busy_left`／`busy_right`。
 - 節奏：每幀至少 `MIN_FRAME_MS`（240ms），更短的幀會被跳過；共用動作的節奏在 `EXTRA_TIMING`，未列的一律 240ms。
 - 一次性動作播幾輪：圖庫自己的狀態 3 輪，共用動作 2 輪（`oneShotMs`）。
 - `shellWork()` 會在每次工具呼叫執行：只判斷指令前 8 KB，正規表示式不得跨行回溯。

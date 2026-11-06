@@ -2,7 +2,7 @@
 
 <p align="center"><a href="README.md">English</a> · <a href="README.zh-TW.md">繁體中文</a> · <b>日本語</b></p>
 
-**現在のバージョン：0.5.5**（2026-11-06）
+**現在のバージョン：0.5.6**（2026-11-06）
 
 ちびキャラの Claude ちゃんが Claude Code のターミナル画面に住みつきます。Claude がしていることに合わせてアニメーションが変わります：考える、探す、ファイルを書く、コマンドを実行する、助手を送り出す、承認を待つ、失敗する、完了する……。何もないときはポーズを変えたり、鼻歌を歌ったり、あくびをして居眠りしたりします。絵をクリックすると反応し、連打すると怒ります。
 横に広い画面では右側のペインに座り、狭い画面では入力欄の上に立ちます。
@@ -375,7 +375,7 @@ fi
 | `searching` 虫眼鏡 | Grep、Glob、WebSearch、WebFetch、検索系のコマンド（`grep`、`rg`、`find`、`ls`、`git status/log/diff`…） | 変わるまで |
 | `writing` 書く | Edit、Write、NotebookEdit、ファイルを変えるコマンド（`>` でファイルへ書き込み、`tee`、`sed -i`、`cp`/`mv`/`mkdir`、ファイルを書く Python スクリプト…） | 変わるまで |
 | `busy_left/right` 忙しい | その他の Bash／PowerShell コマンド：ビルド、テスト、インストール、`git commit` など（毎回向きを替える） | 変わるまで |
-| `delegating` 仕事を振る | Agent | 変わるまで |
+| `delegating` 仕事を振る | バックグラウンドの仕事を任せる：Agent、バックグラウンドで実行する Bash コマンド、Workflow、Monitor、CronCreate、SendMessage、SendToProject、RemoteTrigger の `run` | 変わるまで |
 | `tired` 疲れた | ターンが 10 分を超えた | ターン終了まで |
 | `running-left/right` 歩く | 作業中、40 秒ごとに上部の列を一往復（文字モード） | 一往復 |
 | `swamped_left/right` 本を抱えて歩く | 同上、そのターンで 30 回以上ツールを使った | 一往復 |

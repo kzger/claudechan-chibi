@@ -2,7 +2,7 @@
 
 <p align="center"><a href="README.md">English</a> · <b>繁體中文</b> · <a href="README.ja.md">日本語</a></p>
 
-**目前版本：0.5.5**（2026-11-06）
+**目前版本：0.5.6**（2026-11-06）
 
 讓 Q 版 Claude ちゃん住進 Claude Code 的終端機介面。她會依 Claude 正在做的事切換動畫：思考、搜尋、寫檔、執行指令、派出助手、等你核准、出錯、完成……閒著時會換姿勢、哼歌、打哈欠睡著。點她的圖還會有反應，點太快會生氣。
 寬螢幕時她坐在右側面板，窄螢幕時改站在輸入框上方。
@@ -373,7 +373,7 @@ fi
 | `searching` 拿放大鏡 | Grep、Glob、WebSearch、WebFetch；搜尋類指令（`grep`、`rg`、`find`、`ls`、`git status/log/diff`…） | 持續 |
 | `writing` 寫字 | Edit、Write、NotebookEdit；會改檔案的指令（`>` 寫入檔案、`tee`、`sed -i`、`cp`/`mv`/`mkdir`、寫檔的 Python 腳本…） | 持續 |
 | `busy_left/right` 忙碌 | 其他 Bash／PowerShell 指令：建置、測試、安裝、`git commit` 等（每次換一邊） | 持續 |
-| `delegating` 派工 | Agent | 持續 |
+| `delegating` 派工 | 指派背景工作：Agent、在背景執行的 Bash 指令、Workflow、Monitor、CronCreate、SendMessage、SendToProject、RemoteTrigger 的 `run` | 持續 |
 | `tired` 疲累 | 這一輪超過 10 分鐘 | 持續到這輪結束 |
 | `running-left/right` 走路 | 工作中每 40 秒在上方列左右走一趟（字元畫） | 一趟 |
 | `swamped_left/right` 抱書走路 | 同上，這一輪已用 30 次以上工具 | 一趟 |
