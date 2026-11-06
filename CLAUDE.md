@@ -2,6 +2,10 @@
 
 Claude Code 的 mod（function hooks plugin）：Q 版 Claude ちゃん動畫陪伴。mod 本體在 `plugin/`，使用說明見 `README.md`。
 
+## 溝通語言
+
+一律用**繁體中文**與使用者溝通，包括回覆、提問（AskUserQuestion 的問題與選項）、進度說明與摘要。程式碼識別字與指令維持原文。
+
 ## 修改後的檢查
 
 ```bash

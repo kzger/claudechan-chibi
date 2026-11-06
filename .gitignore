@@ -1,3 +1,4 @@
 plugin/tsconfig.json
 plugin/.claude-plugin/types/
 .DS_Store
+tools/__pycache__/
