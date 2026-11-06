@@ -5,6 +5,7 @@ import type { LayoutMode, Prefs, RecentCall, RenderMode, SetName, View } from '.
 import { SET as CLASSIC } from './frames-classic'
 import { EXTRA } from './frames-extra'
 import { SET as SMOOTH } from './frames-smooth'
+import { shellWork } from './shell'
 import { pickState, type Flags } from './mood'
 import {
   makeCellCache,
@@ -389,9 +390,17 @@ function clip(text: string, n: number): string {
   return one.length > n ? one.slice(0, n - 1) + '…' : one
 }
 
-/** Her pose while a tool runs: TOOL_ANIM, Bash's busy pose facing the other way each time. */
-function toolAnim(tool: string): AnimName {
+/**
+ * Her pose while a tool runs: TOOL_ANIM; a shell command by what it does
+ * (shell.ts): writing files, searching, reading, or else the busy pose,
+ * facing the other way each time.
+ */
+function toolAnim(tool: string, fields: Record<string, unknown>): AnimName {
   if (tool === 'Bash' || tool === 'PowerShell') {
+    const work = shellWork(String(fields.command ?? ''))
+    if (work === 'writing') return 'writing'
+    if (work === 'searching') return 'searching'
+    if (work === 'reading') return 'running'
     busyRight = !busyRight
     return busyRight ? 'busy_right' : 'busy_left'
   }
@@ -820,7 +829,7 @@ export const register: Register = on => {
     lastActivity = await $.clock.now()
     turnTools += 1
     if (asksPerson) flags = { ...flags, isWaiting: true }
-    else flags = { ...flags, workAnim: toolAnim(tool) }
+    else flags = { ...flags, workAnim: toolAnim(tool, fields) }
     await update($, view, v => ({
       ...v,
       bubble: target ? `${verb} ${target}…` : `${verb}…`,

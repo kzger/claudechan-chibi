@@ -298,6 +298,13 @@ test('each tool puts her in its pose; Read keeps the set’s own', async ($, on)
   expect(await title(/寫入中/)).toBe(true)
   await $.tool.call({ tool: 'Read', file_path: '/a.ts' })
   expect(await title(/工作中/)).toBe(true)
+  // a shell command by what it does: writing, searching, or else busy
+  await $.tool.call({ tool: 'Bash', command: "sed -i 's/a/b/' a.ts" })
+  expect(await title(/寫入中/)).toBe(true)
+  await $.tool.call({ tool: 'Bash', command: 'grep -rn auth src | head' })
+  expect(await title(/搜尋中/)).toBe(true)
+  await $.tool.call({ tool: 'Bash', command: 'npm test' })
+  expect(await title(/執行中/)).toBe(true)
   await ui.unmount()
 })
 

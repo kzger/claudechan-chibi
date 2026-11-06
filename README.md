@@ -1,6 +1,6 @@
 # Claude ちゃん・終端機陪伴（claudechan-chibi）
 
-**目前版本：0.5.3**（2026-11-06）
+**目前版本：0.5.4**（2026-11-06）
 
 讓 Q 版 Claude ちゃん住進 Claude Code 的終端機介面。她會依 Claude 正在做的事切換動畫：思考、搜尋、寫檔、執行指令、派出助手、等你核准、出錯、完成……閒著時會換姿勢、哼歌、打哈欠睡著。點她的圖還會有反應，點太快會生氣。
 寬螢幕時她坐在右側面板，窄螢幕時改站在輸入框上方。
@@ -365,10 +365,10 @@ fi
 | `redhot` 臉紅 | 打瞌睡時你送出 prompt 或點她（被抓到偷睡） | 播一輪 |
 | `listening` 聆聽 | 你送出 prompt（「收到！」） | 播兩輪 |
 | `thinking` 思考 | 這一輪開始、還沒用任何工具 | 持續 |
-| `running` 閱讀 | Read，以及下面沒列到的工具 | 持續 |
-| `searching` 拿放大鏡 | Grep、Glob、WebSearch、WebFetch | 持續 |
-| `writing` 寫字 | Edit、Write、NotebookEdit | 持續 |
-| `busy_left/right` 忙碌 | Bash（每次換一邊） | 持續 |
+| `running` 閱讀 | Read、只顯示檔案的指令（`cat`、`head`、`sed -n`…），以及下面沒列到的工具 | 持續 |
+| `searching` 拿放大鏡 | Grep、Glob、WebSearch、WebFetch；搜尋類指令（`grep`、`rg`、`find`、`ls`、`git status/log/diff`…） | 持續 |
+| `writing` 寫字 | Edit、Write、NotebookEdit；會改檔案的指令（`>` 寫入檔案、`tee`、`sed -i`、`cp`/`mv`/`mkdir`、寫檔的 Python 腳本…） | 持續 |
+| `busy_left/right` 忙碌 | 其他 Bash／PowerShell 指令：建置、測試、安裝、`git commit` 等（每次換一邊） | 持續 |
 | `delegating` 派工 | Agent | 持續 |
 | `tired` 疲累 | 這一輪超過 10 分鐘 | 持續到這輪結束 |
 | `running-left/right` 走路 | 工作中每 40 秒在上方列左右走一趟（字元畫） | 一趟 |
@@ -406,6 +406,7 @@ fi
 |---|---|
 | 狀態優先順序、疲累的門檻 | `plugin/hooks/mood.ts` → `pickState()`、`TIRED_AFTER_MS` |
 | 各工具的姿勢、待機輪播、共用動作的節奏 | `plugin/hooks/register.tsx` → `TOOL_ANIM`、`IDLE_ROTATION`、`EXTRA_TIMING` |
+| Bash 指令怎麼分成寫入／搜尋／閱讀／執行 | `plugin/hooks/shell.ts` → `SEARCH`、`READ`、`WRITE`、`GIT_LOOK` |
 | 對話泡泡文字、各工具的描述 | `plugin/hooks/register.tsx` → `describeTool()`、`TITLE` |
 | 收起、打瞌睡、散步、頭暈與抱書走路的門檻 | `plugin/hooks/register.tsx` 開頭的常數 |
 | 點擊的反應、台詞、生氣的門檻 | `plugin/hooks/register.tsx` → `POKES`、`ANGRY_LINES`、`POKE_ANGRY_AT`、`POKE_WINDOW_MS` |
@@ -470,6 +471,7 @@ claude-chibi-cli/
 │  ├─ hooks/mood.ts                  pickState()：狀態優先順序
 │  ├─ hooks/poke.tsx                 疊在圖上的透明點擊區（Client）
 │  ├─ hooks/sprite.ts                幀解碼 → Raster 四分塊字元
+│  ├─ hooks/shell.ts                 依 Bash 指令內容決定姿勢
 │  ├─ hooks/frames-smooth.ts         流暢版字元畫動畫幀（自動產生）
 │  ├─ hooks/frames-classic.ts        經典版字元畫動畫幀（自動產生）
 │  ├─ hooks/frames-extra.ts          共用動作的字元畫動畫幀（自動產生）
