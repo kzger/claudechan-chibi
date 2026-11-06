@@ -25,3 +25,10 @@ CrossPet Claude 失敗動畫改作（CC BY-NC-SA 4.0）：
 - 角色源於社群流行的 Claude 娘設定。以本專案 smooth 動作為參考，透過 OpenAI ImageGen 補繪六張抱書反應。
 - 素材：https://github.com/lokicorvus/crosspet/tree/5c64326b6e7fc175eda0360c0bb5c4732541d138/characters/claude
 - 授權：https://github.com/lokicorvus/crosspet/blob/5c64326b6e7fc175eda0360c0bb5c4732541d138/characters/LICENSE.md
+
+共用動作（plugin/assets/extra/、plugin/hooks/frames-extra.ts，CC BY-NC-SA 4.0）：
+- 以 CrossPet 的 claude/webp/<動作>.webp 為起始姿勢（idle-1 對應 idle.webp），
+  透過內建 imagegen 生成連續姿勢表（image26-v1），再分割、縮圖、對齊腳底，並非原作者繪製。
+- 由 tools/build_extra.py 複製 PNG 影格，並縮小、減色為字元畫。補繪與改作沿用 CC BY-NC-SA 4.0。
+- 原圖：https://github.com/lokicorvus/crosspet/tree/5c64326b6e7fc175eda0360c0bb5c4732541d138/characters/claude
+- 授權：https://github.com/lokicorvus/crosspet/blob/5c64326b6e7fc175eda0360c0bb5c4732541d138/characters/LICENSE.md

@@ -55,3 +55,8 @@ CrossPet 角色素材與動畫改作（CC BY-NC-SA 4.0）：
 - claude/gif/hum.gif：以 CrossPet 的 claude/hum.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
 - claude/gif/idle-animated.gif：以 CrossPet 的 claude/idle、idle-2、idle-3、idle-blink 四張 WebP 為關鍵姿勢，用 OpenAI ImageGen 補繪四張過渡姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
 - claude/gif/listening.gif：以 CrossPet 的 claude/listening.webp 為起始姿勢，另用 OpenAI ImageGen 補繪四張姿勢。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+
+image26-v1 動畫與插件共用動作（CC BY-NC-SA 4.0）：
+- image26-v1/ 的 60 支動畫以 CrossPet 的 claude/webp/<動作>.webp 為起始姿勢，透過內建 imagegen 生成連續姿勢表，
+  再分割、縮圖、對齊腳底；製作紀錄見 docs/crosspet-image26-delivery.md。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
+- 其中 32 支由 tools/build_extra.py 放進 plugin/assets/extra/ 與 plugin/hooks/frames-extra.ts（idle-1 對應 idle）。

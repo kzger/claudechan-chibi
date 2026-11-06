@@ -21,6 +21,48 @@ export type StateName =
 /** The states the Codex spritesheets hold; 'angry' is drawn by tools/build_angry.py (PNG only). */
 export type SheetState = Exclude<StateName, 'angry'>
 
+/**
+ * The image26 actions both sets share (tools/build_extra.py): frames of
+ * their own under assets/extra/, cells in a palette of their own.
+ * 'idle-1' is image26's idle; 'idle' stays each set's original.
+ */
+export type ExtraName =
+  | 'idle-1'
+  | 'idle-2'
+  | 'idle-3'
+  | 'idle-blink'
+  | 'hum'
+  | 'clawd'
+  | 'yawn'
+  | 'sleeping-2'
+  | 'stretch'
+  | 'surprised'
+  | 'pat-2'
+  | 'coaxed'
+  | 'redhot'
+  | 'annoyed'
+  | 'forgiven'
+  | 'thinking'
+  | 'searching'
+  | 'writing'
+  | 'busy_left'
+  | 'busy_right'
+  | 'delegating'
+  | 'swamped_left'
+  | 'swamped_right'
+  | 'tired'
+  | 'listening'
+  | 'proud'
+  | 'happy-2'
+  | 'oops'
+  | 'sulk'
+  | 'dizzy'
+  | 'sorry'
+  | 'compact'
+
+/** Anything she can play: a set's own state or a shared action. */
+export type AnimName = StateName | ExtraName
+
 export type SizeName = 'big' | 'small'
 
 export type SpriteSet = {
@@ -29,13 +71,20 @@ export type SpriteSet = {
   sizes: Record<SizeName, { columns: number; rows: number }>
   /** The Image box (cells) that keeps the PNG frames' aspect. */
   imageSizes: Record<SizeName, { columns: number; rows: number }>
-  states: Record<StateName, StateFrames>
+  states: Record<AnimName, StateFrames>
 }
 
-export type StateFrames = { durations: number[]; big: string[]; small: string[] }
+/**
+ * One animation's frames. A shared action carries its own `palette` (its
+ * cells index that one, not the set's) and `dir`, the assets folder of its PNGs.
+ */
+export type StateFrames = { durations: number[]; big: string[]; small: string[]; palette?: number[]; dir?: string }
 
 /** A set as tools/build_frames.py writes it: the spritesheet's states only. */
 export type SheetSet = Omit<SpriteSet, 'states'> & { states: Record<SheetState, StateFrames> }
+
+/** The shared actions as tools/build_extra.py writes them; their timing is set in register.tsx. */
+export type ExtraSheet = { palette: number[]; states: Record<ExtraName, { big: string[]; small: string[] }> }
 
 // mask -> glyph: ' ▘▝▀▖▌▞▛▗▚▐▜▄▙▟█'
 const GLYPHS = [
@@ -115,7 +164,7 @@ export function spriteRows(set: SpriteSet, size: SizeName): number {
  */
 export function frameCells(
   set: SpriteSet,
-  state: StateName,
+  state: AnimName,
   size: SizeName,
   frame: number,
   width: number,
@@ -126,8 +175,9 @@ export function frameCells(
   const top = blankTop(set, size)
   const rows = spriteRows(set, size)
   const frames = set.states[state][size]
+  const palette = set.states[state].palette ?? set.palette
   const bytes = fromBase64(frames[frame % frames.length] ?? '')
-  const colour = (i: number) => (i === 0 ? fill : (set.palette[i - 1] ?? fill))
+  const colour = (i: number) => (i === 0 ? fill : (palette[i - 1] ?? fill))
   const words = new Uint32Array(width * rows * 3)
   for (let r = 0; r < rows; r++) {
     for (let x = 0; x < width; x++) {
@@ -153,7 +203,7 @@ export function makeCellCache() {
   const cache = new Map<string, string>()
   return (
     set: SpriteSet,
-    state: StateName,
+    state: AnimName,
     size: SizeName,
     frame: number,
     width: number,

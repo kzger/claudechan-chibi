@@ -213,7 +213,82 @@ test('a click wakes her at once, not at the dozing clock’s next tick', async (
 
   await ui.pointer({ type: 'down', x: 1, y: 1, button: 'left', in: 'poke-band' })
   await clock.settle()
-  expect(await ui.find({ type: 'Text', text: /你好！/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /醒來了/ })).toBeDefined()
+  await ui.unmount()
+})
+
+test('she yawns, then sleeps: the doze plays the shared frames', async ($, on) => {
+  const clock = mock.clock(on)
+  mock.store(on)
+  on('command.register', () => ({ value: { command: 'chibi' } }))
+  on('ui.open', () => ({ value: { isPlaced: true } }))
+  on('ui.panes', () => ({ value: [] }))
+  on('ui.blit', () => ({ value: {} }))
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  const paths: string[] = []
+  on('fs.read', (_, e) => {
+    paths.push(String(e.path))
+    return { value: { base64: PNG } }
+  })
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+  await clock.advance(21_000)
+  expect(paths.some(p => p.includes('/assets/extra/yawn/'))).toBe(true)
+  await clock.advance(10_000)
+  expect(paths.some(p => p.includes('/assets/extra/sleeping-2/'))).toBe(true)
+  await ui.unmount()
+})
+
+test('each tool puts her in its pose; Read keeps the set’s own', async ($, on) => {
+  const clock = mock.clock(on)
+  mock.store(on)
+  on('command.register', () => ({ value: { command: 'chibi' } }))
+  on('ui.open', () => ({ value: { isPlaced: true } }))
+  on('ui.panes', () => ({ value: [] }))
+  on('ui.blit', () => ({ value: {} }))
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  on('turn.start', (_, e) => ({ turnId: e.turnId }))
+  on('tool.call', () => ({ result: {} }))
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+  const title = async (re: RegExp) => {
+    await clock.advance(5_000) // past the greeting
+    return (await ui.find({ type: 'Text', text: re })) !== undefined
+  }
+
+  await $.turn.start({ text: 'go', turnId: 't1' })
+  expect(await title(/思考中/)).toBe(true)
+  await $.tool.call({ tool: 'Grep', pattern: 'auth' })
+  expect(await title(/搜尋中/)).toBe(true)
+  await $.tool.call({ tool: 'Edit', file_path: '/a.ts', old_string: 'a', new_string: 'b' })
+  expect(await title(/寫入中/)).toBe(true)
+  await $.tool.call({ tool: 'Read', file_path: '/a.ts' })
+  expect(await title(/工作中/)).toBe(true)
+  await ui.unmount()
+})
+
+test('a failed tool is an oops; the third in a turn makes her dizzy', async ($, on) => {
+  const clock = mock.clock(on)
+  mock.store(on)
+  on('command.register', () => ({ value: { command: 'chibi' } }))
+  on('ui.open', () => ({ value: { isPlaced: true } }))
+  on('ui.panes', () => ({ value: [] }))
+  on('ui.blit', () => ({ value: {} }))
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  on('turn.start', (_, e) => ({ turnId: e.turnId }))
+  on('tool.call', () => ({ result: 'boom', isError: true }))
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+  await clock.advance(5_000)
+  await $.turn.start({ text: 'go', turnId: 't1' })
+
+  await $.tool.call({ tool: 'Bash', command: 'false' })
+  await clock.advance(100)
+  expect(await ui.find({ type: 'Text', text: /失敗了/ })).toBeDefined()
+  await $.tool.call({ tool: 'Bash', command: 'false' })
+  await $.tool.call({ tool: 'Bash', command: 'false' })
+  await clock.advance(100)
+  expect(await ui.find({ type: 'Text', text: /頭暈了/ })).toBeDefined()
   await ui.unmount()
 })
 

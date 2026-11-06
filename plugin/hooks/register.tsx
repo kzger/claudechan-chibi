@@ -3,9 +3,20 @@ import type { Elements, EngineInterface, Register, RenderElement } from 'claude-
 
 import type { LayoutMode, Prefs, RecentCall, RenderMode, SetName, View } from '../types'
 import { SET as CLASSIC } from './frames-classic'
+import { EXTRA } from './frames-extra'
 import { SET as SMOOTH } from './frames-smooth'
 import { pickState, type Flags } from './mood'
-import { makeCellCache, spriteRows, type SheetSet, type SizeName, type SpriteSet, type StateName } from './sprite'
+import {
+  makeCellCache,
+  spriteRows,
+  type AnimName,
+  type ExtraName,
+  type SheetSet,
+  type SizeName,
+  type SpriteSet,
+  type StateFrames,
+  type StateName,
+} from './sprite'
 
 // ─── constants ──────────────────────────────────────────────────────────────
 
@@ -50,12 +61,38 @@ const CHIP: Record<StateName, string> = {
   review: THEME.ok,
   angry: THEME.err,
 }
-const SETS: Record<SetName, SpriteSet> = { smooth: withAngry(SMOOTH), classic: withAngry(CLASSIC) }
-
-const DOZE_AFTER_MS = 20_000 // idle this long: she dozes off
-const DOZE_FRAME = 3 // the idle frame with closed eyes
-const DOZE_TICK_MS = 4_000
+const DOZE_AFTER_MS = 20_000 // idle this long: she dozes off (a yawn, then sleep)
 const WALK_EVERY_MS = 40_000 // while working, a stroll across the band this often
+const SWAMPED_AT = 30 // tool calls in one turn: she strolls under a pile of books
+const DIZZY_AT = 3 // failed tool calls in one turn: she is dizzy
+const LONG_TURN_MS = 3 * 60_000 // a turn this long ends in 'happy-2' rather than 'proud'
+const EXTRA_REPEAT = 2 // a shared action plays its slower loop twice as a one-shot
+const IDLE_BASE_LOOPS = 3 // 'idle-1' loops between two of the rotation's others
+/** What the idle rotation picks from after 'idle-1', with weights; 'idle' is the set's own. */
+const IDLE_ROTATION: { anim: AnimName; weight: number; loops: number }[] = [
+  { anim: 'idle', weight: 2, loops: 1 },
+  { anim: 'idle-2', weight: 2, loops: 1 },
+  { anim: 'idle-3', weight: 2, loops: 1 },
+  { anim: 'idle-blink', weight: 2, loops: 1 },
+  { anim: 'hum', weight: 2, loops: 2 },
+  { anim: 'clawd', weight: 1, loops: 2 },
+]
+/** The pose each tool puts her in; a tool not named keeps the set's 'running'. Bash alternates busy_left / busy_right. */
+const TOOL_ANIM: Record<string, AnimName> = {
+  Read: 'running',
+  Grep: 'searching',
+  Glob: 'searching',
+  WebSearch: 'searching',
+  WebFetch: 'searching',
+  Edit: 'writing',
+  MultiEdit: 'writing',
+  Write: 'writing',
+  NotebookEdit: 'writing',
+  Agent: 'delegating',
+  Task: 'delegating',
+}
+/** Poses that mean she is working: the band's stroll starts from these. */
+const WORK_ANIMS = new Set<AnimName>(['running', 'thinking', 'searching', 'writing', 'busy_left', 'busy_right', 'delegating', 'tired'])
 const WALK_MAX = 16 // columns of room the stroll may use
 const BUBBLE_MIN = 30 // columns the band keeps for the speech bubble
 // A picture scales to the room it has: the band takes this share of the
@@ -84,14 +121,15 @@ const REPEAT = 3 // one-shot states play three loops, as in the Codex app
 const POKE_WINDOW_MS = 4_000
 const POKE_ANGRY_AT = 3
 const POKE_MIN_MS = 1_500
-const POKES: { state: StateName; text: string }[] = [
-  { state: 'waving', text: '嗨～找我嗎？' },
-  { state: 'jumping', text: '嘿嘿，被你發現了！' },
-  { state: 'review', text: '在看什麼呢？我也要看' },
-  { state: 'running', text: '我有在努力喔！' },
-  { state: 'waiting', text: '……要我做什麼嗎？' },
+const POKES: { anim: AnimName; text: string }[] = [
+  { anim: 'surprised', text: '嗨～找我嗎？' },
+  { anim: 'pat-2', text: '嘿嘿，被你發現了！' },
+  { anim: 'coaxed', text: '在看什麼呢？我也要看' },
+  { anim: 'redhot', text: '我有在努力喔！' },
+  { anim: 'hum', text: '……要我做什麼嗎？' },
 ]
 const POKE_WARNING = '唔…別一直戳啦'
+const WAKE_LINE = '嗯…？我醒了！'
 const ANGRY_LINES = ['生氣了！不准再戳了！', '哼！', '還戳！', '不理你了啦！']
 
 const TITLE: Record<StateName, string> = {
@@ -118,6 +156,65 @@ const ICON: Record<StateName, string> = {
   review: '✓',
   angry: '#',
 }
+/** Each shared action's chip: the state whose colour and icon it takes, and its own words. */
+const EXTRA_LOOK: Record<ExtraName, { as: StateName; title: string }> = {
+  'idle-1': { as: 'idle', title: '待命中' },
+  'idle-2': { as: 'idle', title: '待命中' },
+  'idle-3': { as: 'idle', title: '待命中' },
+  'idle-blink': { as: 'idle', title: '待命中' },
+  hum: { as: 'idle', title: '哼歌中' },
+  clawd: { as: 'idle', title: '待命中' },
+  yawn: { as: 'idle', title: '打瞌睡' },
+  'sleeping-2': { as: 'idle', title: '打瞌睡' },
+  stretch: { as: 'jumping', title: '醒來了' },
+  surprised: { as: 'waving', title: '你好！' },
+  'pat-2': { as: 'waving', title: '你好！' },
+  coaxed: { as: 'waving', title: '你好！' },
+  redhot: { as: 'waving', title: '你好！' },
+  annoyed: { as: 'angry', title: '別戳了' },
+  forgiven: { as: 'review', title: '原諒你了' },
+  thinking: { as: 'running', title: '思考中' },
+  searching: { as: 'running', title: '搜尋中' },
+  writing: { as: 'running', title: '寫入中' },
+  busy_left: { as: 'running', title: '執行中' },
+  busy_right: { as: 'running', title: '執行中' },
+  delegating: { as: 'running', title: '派工中' },
+  swamped_left: { as: 'running', title: '工作中' },
+  swamped_right: { as: 'running', title: '工作中' },
+  tired: { as: 'running', title: '有點累了' },
+  listening: { as: 'jumping', title: '收到！' },
+  proud: { as: 'review', title: '完成了' },
+  'happy-2': { as: 'review', title: '完成了' },
+  oops: { as: 'failed', title: '失敗了' },
+  sulk: { as: 'failed', title: '被拒絕了' },
+  dizzy: { as: 'failed', title: '頭暈了' },
+  sorry: { as: 'failed', title: '被打斷了' },
+  compact: { as: 'running', title: '整理中' },
+}
+/** An animation's chip: colour, icon and words. */
+function lookOf(anim: AnimName): { chip: string; icon: string; title: string } {
+  const extra = EXTRA_LOOK[anim as ExtraName]
+  const as = extra?.as ?? (anim as StateName)
+  return { chip: CHIP[as], icon: ICON[as], title: extra?.title ?? TITLE[as] }
+}
+
+/**
+ * Each shared action's frame times. image26 times every frame 120 ms; the
+ * mod slows them so no frame is skipped (MIN_FRAME_MS) and the quiet ones
+ * read as quiet: the idle poses hold their open eyes and blink quickly.
+ */
+const EVEN = (ms: number) => (n: number) => Array<number>(n).fill(ms)
+const EXTRA_TIMING: Partial<Record<ExtraName, (n: number) => number[]>> = {
+  'idle-1': () => [1000, 400, 240, 240, 240, 1000], // open, open, half, shut, half, open
+  'idle-2': () => [1000, 400, 240, 240, 240, 1000],
+  'idle-3': () => [1000, 400, 240, 240, 240, 1000],
+  'idle-blink': () => [240, 240, 1300, 1000, 240, 240], // shut at both ends
+  hum: EVEN(320),
+  clawd: EVEN(320),
+  yawn: EVEN(320),
+  'sleeping-2': EVEN(900),
+}
+const SETS: Record<SetName, SpriteSet> = { smooth: withExtras(withAngry(SMOOTH)), classic: withExtras(withAngry(CLASSIC)) }
 
 // ─── state the drawings read ($.state: survives a hot reload) ───────────────
 
@@ -145,16 +242,32 @@ type Site = { kind: 'cells' | 'image'; requestId: string; size: SizeName; width:
 let flags: Flags = {
   now: 0,
   isWorking: false,
+  turnStartedAt: 0,
+  workAnim: 'thinking',
   isWaiting: false,
   greetUntil: 0,
+  stretchUntil: 0,
   ackUntil: 0,
   failedUntil: 0,
+  failedAnim: 'failed',
+  compactUntil: 0,
   reviewUntil: 0,
+  reviewAnim: 'proud',
   pokeUntil: 0,
-  pokeState: 'waving',
+  pokeAnim: 'surprised',
   angryUntil: 0,
+  forgivenUntil: 0,
 }
 let lastActivity = 0
+/** This turn's tool calls and failed ones (main loop only), and which way Bash's busy pose faces next. */
+let turnTools = 0
+let turnFailures = 0
+let busyRight = false
+/** The idle rotation: what plays and how many loops of it are left. */
+let idleAnim: AnimName = 'idle-1'
+let idleLoopsLeft = IDLE_BASE_LOOPS
+/** When the doze began: a yawn first, then sleep. */
+let dozeStartedAt = 0
 /** Clicks on her, recent first out: too many inside POKE_WINDOW_MS and she gets cross. */
 let pokes: number[] = []
 let pokeTurn = 0
@@ -162,7 +275,10 @@ let pokeTurn = 0
 let bubbleBeforePoke: string | null = null
 let pokeBubble = ''
 let turnStartedAt = 0
-let shown: StateName = 'idle'
+/** What pickState chose; 'idle' is drawn as `idleAnim` or the doze (see animNow). */
+let shown: AnimName = 'idle'
+/** The animation the last blit drew: a change restarts it at its first frame. */
+let drawn: AnimName = 'idle-1'
 let frame = 0
 let stride = 1 // frames each blit moves on
 let isDozing = false
@@ -183,6 +299,7 @@ let isDockedInBand = false
 const sites: { pane?: Site; band?: Site } = {}
 const cellsOf = makeCellCache()
 const pngCache = new Map<string, string | null>()
+const PNG_CACHE_MAX = 300 // frames kept as base64: a few states at both sizes
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -192,14 +309,39 @@ type $T = EngineInterface
  * The set with 'angry' added: its PNG frames come from tools/build_angry.py;
  * in cells, which have none, she pouts with the 'failed' frames instead.
  */
-function withAngry(set: SheetSet): SpriteSet {
+function withAngry(set: SheetSet): BaseSet {
   const durations = [...Array(7).fill(120), 240]
   const { big, small } = set.states.failed
   const sample = (frames: string[]) => durations.map((_, i) => frames[Math.floor(i * frames.length / durations.length)]!)
   return { ...set, states: { ...set.states, angry: { big: sample(big), small: sample(small), durations } } }
 }
 
-/** A click on her: the next reaction in turn, or anger when the clicks come too fast. */
+/** A set's own states, 'angry' included, before the shared actions join it. */
+type BaseSet = Omit<SpriteSet, 'states'> & { states: Record<StateName, StateFrames> }
+
+/** The set with the shared image26 actions added, in their own palette and assets folder. */
+function withExtras(set: BaseSet): SpriteSet {
+  const states = { ...set.states } as Record<AnimName, StateFrames>
+  for (const [name, f] of Object.entries(EXTRA.states) as [ExtraName, { big: string[]; small: string[] }][]) {
+    const durations = (EXTRA_TIMING[name] ?? EVEN(240))(f.big.length)
+    states[name] = { ...f, durations, palette: EXTRA.palette, dir: 'extra' } satisfies StateFrames
+  }
+  return { ...set, states }
+}
+
+const isExtra = (anim: AnimName) => anim in EXTRA.states
+
+/** One loop of an animation, in ms. */
+function loopMs(anim: AnimName): number {
+  return SETS.smooth.states[anim].durations.reduce((a, b) => a + b, 0)
+}
+
+/** How long a one-shot plays: three loops of a set's state, two of a (slower) shared action. */
+function oneShotMs(anim: AnimName): number {
+  return loopMs(anim) * (isExtra(anim) ? EXTRA_REPEAT : REPEAT)
+}
+
+/** A click on her: the next reaction in turn, a stretch if she dozed, or anger when the clicks come too fast. */
 async function poke($: $T) {
   const now = await $.clock.now()
   lastActivity = now
@@ -209,20 +351,23 @@ async function poke($: $T) {
   let bubble: string
   if (flags.angryUntil > now || pokes.length >= POKE_ANGRY_AT) {
     const isNew = flags.angryUntil <= now
-    flags = { ...flags, now, angryUntil: now + oneShotMs('angry'), pokeUntil: 0 }
+    const angryUntil = now + oneShotMs('angry')
+    flags = { ...flags, now, angryUntil, forgivenUntil: angryUntil + loopMs('forgiven'), pokeUntil: 0 }
     bubble = (isNew ? ANGRY_LINES[0] : ANGRY_LINES[1 + (pokes.length % (ANGRY_LINES.length - 1))]) ?? '哼！'
+  } else if (isDozing) {
+    flags = { ...flags, now, pokeAnim: 'stretch', pokeUntil: now + loopMs('stretch') }
+    bubble = WAKE_LINE
+  } else if (pokes.length === POKE_ANGRY_AT - 1) {
+    flags = { ...flags, now, pokeAnim: 'annoyed', pokeUntil: now + Math.max(POKE_MIN_MS, loopMs('annoyed')) }
+    bubble = POKE_WARNING
   } else {
-    const r = POKES[pokeTurn++ % POKES.length] ?? { state: 'waving' as const, text: '嗨～' }
-    flags = { ...flags, now, pokeState: r.state, pokeUntil: now + Math.max(POKE_MIN_MS, oneShotMs(r.state) / REPEAT) }
-    bubble = pokes.length === POKE_ANGRY_AT - 1 ? POKE_WARNING : r.text
+    const r = POKES[pokeTurn++ % POKES.length] ?? { anim: 'surprised' as const, text: '嗨～' }
+    flags = { ...flags, now, pokeAnim: r.anim, pokeUntil: now + Math.max(POKE_MIN_MS, loopMs(r.anim)) }
+    bubble = r.text
   }
   pokeBubble = bubble
   await setView($, { bubble, isDozing: false })
   await wake($)
-}
-
-function oneShotMs(state: StateName): number {
-  return SETS.smooth.states[state].durations.reduce((a, b) => a + b, 0) * REPEAT
 }
 
 /** Whether a pane opened on this screen docks at the side rather than sitting above the prompt. */
@@ -241,6 +386,15 @@ function baseName(p: unknown): string {
 function clip(text: string, n: number): string {
   const one = text.replace(/\s+/g, ' ').trim()
   return one.length > n ? one.slice(0, n - 1) + '…' : one
+}
+
+/** Her pose while a tool runs: TOOL_ANIM, Bash's busy pose facing the other way each time. */
+function toolAnim(tool: string): AnimName {
+  if (tool === 'Bash' || tool === 'PowerShell') {
+    busyRight = !busyRight
+    return busyRight ? 'busy_right' : 'busy_left'
+  }
+  return TOOL_ANIM[tool] ?? 'running'
 }
 
 function describeTool(tool: string, e: Record<string, unknown>): { verb: string; target: string } {
@@ -328,10 +482,11 @@ function wantsImage(): boolean {
 }
 
 /** One PNG frame of the plugin's own, as base64; null where it cannot be read. */
-async function loadPng($: $T, set: SpriteSet, state: StateName, f: number, size: SizeName): Promise<string | null> {
-  const n = set.states[state].big.length
+async function loadPng($: $T, set: SpriteSet, state: AnimName, f: number, size: SizeName): Promise<string | null> {
+  const frames = set.states[state]
+  const n = frames.big.length
   // The band ('small') shows a head-and-shoulders crop; the pane the full figure.
-  const path = `${$.plugin.root}/assets/${set.name}/${state}/${f % n}${size === 'small' ? '-bust' : ''}.png`
+  const path = `${$.plugin.root}/assets/${frames.dir ?? set.name}/${state}/${f % n}${size === 'small' ? '-bust' : ''}.png`
   if (pngCache.has(path)) return pngCache.get(path) ?? null
   let png: string | null = null
   try {
@@ -339,6 +494,7 @@ async function loadPng($: $T, set: SpriteSet, state: StateName, f: number, size:
   } catch {
     png = null
   }
+  if (pngCache.size > PNG_CACHE_MAX) pngCache.clear() // 400+ shared frames: keep the long-lived process small
   pngCache.set(path, png)
   return png
 }
@@ -370,13 +526,13 @@ async function drawSprite(
   requestId: string,
   size: SizeName,
   width: number,
-  state: StateName,
+  state: AnimName,
   offset: number,
   room: { columns: number; rows: number },
 ) {
   const { Raster, Image } = els
   if (wantsImage()) {
-    const png = await loadPng($, activeSet, state, frameIndex(), size)
+    const png = await loadPng($, activeSet, state, frame, size)
     if (png !== null) {
       const { columns, rows } = imageBox(size, room.columns, room.rows)
       sites[slot] = { kind: 'image', requestId, size, width: columns, rows, fill: hex(THEME.stage) }
@@ -387,7 +543,7 @@ async function drawSprite(
   const rows = spriteRows(activeSet, size)
   const fill = hex(cellColor(THEME.stage))
   sites[slot] = { kind: 'cells', requestId, size, width, rows, fill }
-  const cells = cellsOf(activeSet, state, size, frameIndex(), width, offset, fill)
+  const cells = cellsOf(activeSet, state, size, frame, width, offset, fill)
   return <Raster key="sprite" columns={width} rows={rows} cells={cells} />
 }
 
@@ -396,23 +552,31 @@ async function setView($: $T, patch: Partial<View>) {
 }
 
 /** What the band draws right now: the walk overrides the mood while it lasts. */
-function bandSprite(room: number): { state: StateName; offset: number } {
-  if (walk) return { state: walk.dir > 0 ? 'running-right' : 'running-left', offset: Math.min(walk.offset, room) }
-  return { state: shown, offset: restOffset(room) }
+function bandSprite(room: number): { state: AnimName; offset: number } {
+  if (walk) return { state: walkAnim(walk.dir), offset: Math.min(walk.offset, room) }
+  return { state: animNow(), offset: restOffset(room) }
+}
+
+/** The stroll's frames: a pile of books on a busy turn. */
+function walkAnim(dir: 1 | -1): AnimName {
+  if (turnTools >= SWAMPED_AT) return dir > 0 ? 'swamped_right' : 'swamped_left'
+  return dir > 0 ? 'running-right' : 'running-left'
+}
+
+/** What she plays now, the stroll aside: 'idle' is the rotation's pose, or the doze's. */
+function animNow(): AnimName {
+  if (shown !== 'idle') return shown
+  if (!isDozing) return idleAnim
+  return flags.now - dozeStartedAt < loopMs('yawn') ? 'yawn' : 'sleeping-2'
 }
 
 /** Cells keep room beside her for the stroll: at rest she stands in the middle of it. */
 const restOffset = (room: number) => Math.floor(room / 2)
 
-function frameIndex(): number {
-  return isDozing ? DOZE_FRAME : frame
-}
-
 // ─── the animation clock ────────────────────────────────────────────────────
 
 function nextDelay(): number {
-  if (isDozing) return DOZE_TICK_MS
-  const state = walk ? (walk.dir > 0 ? 'running-right' : 'running-left') : shown
+  const state = walk ? walkAnim(walk.dir) : animNow()
   const d = activeSet.states[state].durations
   const ms = d[frame % d.length] ?? 150
   stride = state !== 'failed' && ms < MIN_FRAME_MS ? Math.round(MIN_FRAME_MS / ms) : 1
@@ -420,11 +584,11 @@ function nextDelay(): number {
 }
 
 async function blitAll($: $T) {
-  const f = frameIndex()
+  const f = frame
   for (const name of ['pane', 'band'] as const) {
     const site = sites[name]
     if (!site) continue
-    const { state, offset } = name === 'band' && site.kind === 'cells' ? bandSprite(site.width - activeSet.sizes[site.size].columns) : { state: shown, offset: 0 }
+    const { state, offset } = name === 'band' && site.kind === 'cells' ? bandSprite(site.width - activeSet.sizes[site.size].columns) : { state: animNow(), offset: 0 }
     const where = { requestId: site.requestId, key: 'sprite', columns: site.width, rows: site.rows }
     let r
     if (site.kind === 'image') {
@@ -465,6 +629,11 @@ async function tick($: $T) {
 
   if (want !== shown || dozing !== isDozing) {
     const changedMood = want !== shown
+    if (dozing && !isDozing) dozeStartedAt = now
+    if (changedMood && want === 'idle') {
+      idleAnim = 'idle-1'
+      idleLoopsLeft = IDLE_BASE_LOOPS
+    }
     const isCalm = flags.pokeUntil <= now && flags.angryUntil <= now
     if (changedMood && isCalm && bubbleBeforePoke !== null) {
       // Back to what she was saying, unless something new was said meanwhile.
@@ -474,15 +643,13 @@ async function tick($: $T) {
     }
     shown = want
     isDozing = dozing
-    if (changedMood) {
-      frame = 0
-      walk = null
-    }
+    frame = 0
+    if (changedMood) walk = null
+    drawn = animNow()
     await setView($, { state: want, isDozing: dozing, ...(dozing ? { bubble: 'zzz…' } : {}) })
-    if (mode === 'off') $.ui.status(`${ICON[want]} Claude ちゃん：${dozing ? '打瞌睡' : TITLE[want]}`)
+    if (mode === 'off') $.ui.status(`${lookOf(want).icon} Claude ちゃん：${dozing ? '打瞌睡' : lookOf(want).title}`)
     return // the redraw paints this frame
   }
-  if (isDozing) return
 
   // A stroll across the band now and then while she works.
   const band = sites.band
@@ -497,7 +664,7 @@ async function tick($: $T) {
       walk = null // back in the middle
       lastWalkAt = now
     }
-  } else if (shown === 'running' && band?.kind === 'cells' && band.width - activeSet.sizes.small.columns >= 8) {
+  } else if (flags.isWorking && WORK_ANIMS.has(shown) && band?.kind === 'cells' && band.width - activeSet.sizes.small.columns >= 8) {
     if (lastWalkAt === 0) lastWalkAt = now
     if (now - lastWalkAt > WALK_EVERY_MS) {
       const room = band.width - activeSet.sizes.small.columns
@@ -506,7 +673,37 @@ async function tick($: $T) {
   }
 
   frame += stride
+  if (shown === 'idle' && !isDozing) {
+    // The rotation: 'idle-1' a few loops, then one of the others, then back.
+    const n = activeSet.states[idleAnim].big.length
+    if (frame >= n) {
+      frame %= n
+      if (--idleLoopsLeft <= 0) {
+        const next = idleAnim === 'idle-1' ? pickIdle() : { anim: 'idle-1' as AnimName, loops: IDLE_BASE_LOOPS }
+        idleAnim = next.anim
+        idleLoopsLeft = next.loops
+        frame = 0
+      }
+    }
+  }
+  // A new animation without a new mood (the yawn turning to sleep, the rotation) starts at its first frame.
+  const anim = walk ? walkAnim(walk.dir) : animNow()
+  if (anim !== drawn) {
+    drawn = anim
+    if (!walk) frame = 0
+  }
   await blitAll($)
+}
+
+/** The next pose of the idle rotation, by weight. */
+function pickIdle(): { anim: AnimName; loops: number } {
+  const total = IDLE_ROTATION.reduce((a, r) => a + r.weight, 0)
+  let at = Math.random() * total
+  for (const r of IDLE_ROTATION) {
+    at -= r.weight
+    if (at < 0) return r
+  }
+  return IDLE_ROTATION[0]!
 }
 
 function startClock($: $T) {
@@ -526,7 +723,7 @@ function startClock($: $T) {
 
 /**
  * Draw a change of mood now rather than at the next tick: asleep the clock
- * waits DOZE_TICK_MS, and a slow frame (idle's last) nearly two seconds.
+ * waits a slow sleeping frame, and an idle pose holds its open eyes a second.
  */
 async function wake($: $T) {
   if (timer === null) return
@@ -574,7 +771,9 @@ export const register: Register = on => {
     if (e.command || e.isMeta) return next(e)
     const now = await $.clock.now()
     lastActivity = now
-    flags = { ...flags, ackUntil: now + oneShotMs('jumping'), failedUntil: 0, reviewUntil: 0 }
+    // Woken from a doze she stretches first, then listens.
+    const stretchUntil = isDozing ? now + loopMs('stretch') : 0
+    flags = { ...flags, stretchUntil, ackUntil: Math.max(now, stretchUntil) + oneShotMs('listening'), failedUntil: 0, reviewUntil: 0 }
     await setView($, { bubble: '收到！馬上開始', isDozing: false })
     await wake($)
     // A pane opened unasked waits below the dock's width; opened now, at the
@@ -593,7 +792,9 @@ export const register: Register = on => {
     const now = await $.clock.now()
     lastActivity = now
     turnStartedAt = now
-    flags = { ...flags, isWorking: true }
+    turnTools = 0
+    turnFailures = 0
+    flags = { ...flags, isWorking: true, turnStartedAt: now, workAnim: 'thinking' }
     await wake($)
     await setView($, { tools: 0 })
     return next(e)
@@ -616,21 +817,30 @@ export const register: Register = on => {
     const asksPerson = tool === 'AskUserQuestion' || tool === 'ExitPlanMode'
     const id = e.tool_use_id ?? `${tool}:${await $.clock.now()}`
     lastActivity = await $.clock.now()
+    turnTools += 1
     if (asksPerson) flags = { ...flags, isWaiting: true }
+    else flags = { ...flags, workAnim: toolAnim(tool) }
     await update($, view, v => ({
       ...v,
       bubble: target ? `${verb} ${target}…` : `${verb}…`,
       tools: v.tools + 1,
       recent: [...v.recent, { id, tool, target, isOk: null } as RecentCall].slice(-8),
     }))
-    if (asksPerson) await wake($)
+    await wake($) // a new pose, or the dialog
 
     const result = await next(e)
 
     const now = await $.clock.now()
     lastActivity = now
-    const isFailed = result.deny !== undefined || result.isError === true
-    flags = { ...flags, isWaiting: false, ...(isFailed ? { failedUntil: now + oneShotMs('failed') } : {}) }
+    const isDenied = result.deny !== undefined
+    const isFailed = isDenied || result.isError === true
+    if (isFailed) {
+      if (!isDenied) turnFailures += 1
+      const failedAnim: AnimName = isDenied ? 'sulk' : turnFailures >= DIZZY_AT ? 'dizzy' : 'oops'
+      flags = { ...flags, isWaiting: false, failedAnim, failedUntil: now + oneShotMs(failedAnim) }
+    } else {
+      flags = { ...flags, isWaiting: false }
+    }
     await wake($)
     await update($, view, v => ({
       ...v,
@@ -647,16 +857,35 @@ export const register: Register = on => {
     lastActivity = now
     const seconds = Math.round((e.durationMs || now - turnStartedAt) / 1000)
     if (e.reason === 'answer') {
-      flags = { ...flags, isWorking: false, isWaiting: false, reviewUntil: now + oneShotMs('review') }
+      const reviewAnim: AnimName = seconds * 1000 >= LONG_TURN_MS ? 'happy-2' : 'proud'
+      flags = { ...flags, isWorking: false, isWaiting: false, reviewAnim, reviewUntil: now + oneShotMs(reviewAnim) }
       await setView($, { bubble: `完成了！用時 ${fmtSeconds(seconds)} ✿`, lastTurnSeconds: seconds })
     } else {
-      flags = { ...flags, isWorking: false, isWaiting: false, failedUntil: now + oneShotMs('failed') }
+      const failedAnim: AnimName = e.reason === 'aborted' ? 'sorry' : 'failed'
+      flags = { ...flags, isWorking: false, isWaiting: false, failedAnim, failedUntil: now + oneShotMs(failedAnim) }
       const why = e.reason === 'aborted' ? '被打斷了…需要再叫我' : '唔…這輪出錯了'
       await setView($, { bubble: why, lastTurnSeconds: seconds })
     }
     await wake($)
     return done
   })
+
+  // Compacting the conversation: she packs it up while it runs, and a moment after.
+  on('session.compact', async ($, e, next) => {
+    if (e.agentId !== undefined || e.trigger === 'precompute') return next(e)
+    lastActivity = await $.clock.now()
+    flags = { ...flags, compactUntil: Number.MAX_SAFE_INTEGER }
+    await setView($, { bubble: '整理一下對話…', isDozing: false })
+    await wake($)
+    try {
+      return await next(e)
+    } finally {
+      const now = await $.clock.now()
+      lastActivity = now
+      flags = { ...flags, compactUntil: now + loopMs('compact') }
+      await wake($)
+    }
+  }).catch(passThrough)
 
   on('command.run', { command: 'chibi' }, async ($, e) => {
     const [word, arg] = e.args.trim().split(/\s+/)
@@ -694,7 +923,7 @@ export const register: Register = on => {
       } else {
         await $.ui.close({ id: PANE })
       }
-      if (word === 'off') $.ui.status(`${ICON[shown]} Claude ちゃん：${TITLE[shown]}`)
+      if (word === 'off') $.ui.status(`${lookOf(shown).icon} Claude ちゃん：${lookOf(shown).title}`)
       const label = {
         auto: '自動（寬螢幕停靠右側，窄螢幕框在輸入框上方）',
         pane: '面板（寬螢幕停靠右側，窄螢幕框在輸入框上方）',
@@ -705,7 +934,7 @@ export const register: Register = on => {
     }
     return {
       text: [
-        `Claude ちゃん — 顯示：${p.mode}，圖庫：${p.set}，繪製：${p.render}${p.render === 'auto' ? (imageBroken ? '（字元）' : '（原圖）') : ''}，狀態：${TITLE[shown]}`,
+        `Claude ちゃん — 顯示：${p.mode}，圖庫：${p.set}，繪製：${p.render}${p.render === 'auto' ? (imageBroken ? '（字元）' : '（原圖）') : ''}，狀態：${lookOf(shown).title}`,
         `目前畫面 — 面板：${kindLabel(sites.pane)}，上方列：${kindLabel(sites.band)}`,
         '/chibi auto | pane | band | off     切換顯示方式',
         '/chibi set smooth | classic         切換圖庫',
@@ -746,7 +975,7 @@ export const register: Register = on => {
           rows: Math.min(Math.floor(bodyRows * DOCK_ROWS_SHARE), bodyRows - DOCK_TEXT_ROWS - DOCK_RECENT_MIN),
         }
       : { columns: cols - BUBBLE_MIN - 6, rows: bodyRows } // inline: fit the rows the pane has
-    const sprite = pokeable({ Box, Client }, await drawSprite($, { Raster, Image }, 'pane', e.requestId, size, sc, shown, 0, spriteRoom), 'pane')
+    const sprite = pokeable({ Box, Client }, await drawSprite($, { Raster, Image }, 'pane', e.requestId, size, sc, animNow(), 0, spriteRoom), 'pane')
     const shownRows = sites.pane?.rows ?? spriteRows(activeSet, size)
 
     if (!isDock) return compact(els, sprite, v, cols, false, stageOf('pane')) // seated inline above the prompt
@@ -828,7 +1057,7 @@ export const register: Register = on => {
     const inner = cols - BAND_FRAME // inside the frame
     const spriteRoom = { columns: inner - BUBBLE_MIN - 6, rows: bandRows - BAND_FRAME }
     const { state } = bandSprite(0)
-    const isImage = wantsImage() && (await loadPng($, activeSet, state, frameIndex(), 'small')) !== null
+    const isImage = wantsImage() && (await loadPng($, activeSet, state, frame, 'small')) !== null
     const tooSmall = isImage ? spriteRoom.rows < IMAGE_ROWS_MIN || spriteRoom.columns < 8 : e.props.maxRows < sr + BAND_FRAME
 
     // A short band (a small split, a tall status line): her face as tall as
@@ -879,12 +1108,12 @@ type Sprite = Awaited<ReturnType<typeof drawSprite>>
 
 /** The state as a coloured chip: icon + words on the state's colour. */
 function chip({ Text }: TextEls, v: View) {
-  const state = (v.isDozing ? 'idle' : shown) as StateName
-  const title = v.isDozing ? '打瞌睡' : TITLE[shown]
+  const look = lookOf(v.isDozing ? 'idle' : shown)
+  const title = v.isDozing ? '打瞌睡' : look.title
   return (
-    <Text bold backgroundColor={CHIP[state]} color={THEME.onChip}>
+    <Text bold backgroundColor={look.chip} color={THEME.onChip}>
       {' '}
-      {v.isDozing ? 'z' : ICON[shown]} {title}{' '}
+      {v.isDozing ? 'z' : look.icon} {title}{' '}
     </Text>
   )
 }

@@ -1,8 +1,8 @@
 # Claude ちゃん・終端機陪伴（claudechan-chibi）
 
-**目前版本：0.4.3**（2026-11-03）
+**目前版本：0.5.0**（2026-11-06）
 
-讓 Q 版 Claude ちゃん住進 Claude Code 的終端機介面。她會依 Claude 正在做的事切換 9 種動畫：讀檔、改檔、等你核准、出錯、完成……點她的圖還會有反應，點太快會生氣。
+讓 Q 版 Claude ちゃん住進 Claude Code 的終端機介面。她會依 Claude 正在做的事切換動畫：思考、搜尋、寫檔、執行指令、派出助手、等你核准、出錯、完成……閒著時會換姿勢、哼歌、打哈欠睡著。點她的圖還會有反應，點太快會生氣。
 寬螢幕時她坐在右側面板，窄螢幕時改站在輸入框上方。
 
 <p align="center">
@@ -16,9 +16,9 @@
 </p>
 
 <details>
-<summary><b>9 種動畫一覽</b></summary>
+<summary><b>基本動畫一覽</b></summary>
 
-<p align="center"><img src="docs/images/states.gif" alt="9 種動畫" width="470"></p>
+<p align="center"><img src="docs/images/states.gif" alt="基本動畫" width="470"></p>
 
 </details>
 
@@ -360,30 +360,37 @@ fi
 | 動畫 | 何時出現 | 播放方式 |
 |---|---|---|
 | `waving` 揮手 | 開啟 session | 播三輪 |
-| `jumping` 點頭眨眼 | 你送出 prompt（「收到！」） | 播三輪 |
-| `running` 寫作 | 這一輪正在進行 | 持續 |
+| `stretch` 伸懶腰 | 打瞌睡時你送出 prompt 或點她 | 播一輪 |
+| `listening` 聆聽 | 你送出 prompt（「收到！」） | 播兩輪 |
+| `thinking` 思考 | 這一輪開始、還沒用任何工具 | 持續 |
+| `running` 閱讀 | Read，以及下面沒列到的工具 | 持續 |
+| `searching` 拿放大鏡 | Grep、Glob、WebSearch、WebFetch | 持續 |
+| `writing` 寫字 | Edit、Write、NotebookEdit | 持續 |
+| `busy_left/right` 忙碌 | Bash（每次換一邊） | 持續 |
+| `delegating` 派工 | Agent | 持續 |
+| `tired` 疲累 | 這一輪超過 10 分鐘 | 持續到這輪結束 |
+| `running-left/right` 走路 | 工作中每 40 秒在上方列左右走一趟（字元畫） | 一趟 |
+| `swamped_left/right` 抱書走路 | 同上，這一輪已用 30 次以上工具 | 一趟 |
 | `waiting` 等待 | 權限確認、AskUserQuestion、計畫核准 | 持續到你回應 |
-| `failed` 失敗 | 工具出錯或被拒絕、你中斷、API 錯誤 | 播三輪 |
-| `review` 閱讀 | 這一輪完成 | 播三輪 |
-| `idle` 待機 | 沒事時；閒置 20 秒後停在閉眼幀打瞌睡 | 持續 |
-| `running-left/right` | 工作超過 40 秒時，在上方列左右走一趟 | 一趟 |
-| `angry` 生氣 | 4 秒內點她 3 次（生氣時再點會更久）；第 2 次會先警告「別一直戳啦」 | 播三輪 |
+| `oops` 糟糕 | 工具出錯 | 播兩輪 |
+| `dizzy` 頭暈 | 這一輪第 3 次以上工具出錯 | 播兩輪 |
+| `sulk` 嘔氣 | 工具被拒絕 | 播兩輪 |
+| `sorry` 抱歉 | 你中斷這一輪 | 播兩輪 |
+| `failed` 失敗 | 這一輪以錯誤結束（API 錯誤等） | 播三輪 |
+| `compact` 打包 | 壓縮對話（`/compact` 或自動） | 持續到壓縮完成 |
+| `proud` 得意 | 這一輪完成 | 播兩輪 |
+| `happy-2` 開心 | 這一輪超過 3 分鐘才完成 | 播兩輪 |
+| `idle-1` 待機 | 沒事時；幾輪後輪流換成 `idle`（原版）、`idle-2`、`idle-3`、`idle-blink`、`hum` 哼歌、`clawd` 抱玩偶 | 持續 |
+| `yawn` → `sleeping-2` 打瞌睡 | 閒置 20 秒：打一個哈欠，接著睡著 | 持續 |
+| `angry` 生氣 | 4 秒內點她 3 次（生氣時再點會更久） | 播三輪 |
+| `annoyed` 不耐煩 | 4 秒內第 2 次點她（「別一直戳啦」） | 播一輪 |
+| `forgiven` 原諒 | 生氣結束後 | 播一輪 |
 
-**點她的圖**：每點一次依序換一種反應與台詞（揮手、點頭、閱讀、寫作、等待），約 1.5 秒後回到原本的動作與台詞；打瞌睡時點她會馬上醒來。只有「等你決定」（權限確認等）時不會被打斷。點擊靠的是疊在圖上的透明區域，需要終端機支援滑鼠回報（Ghostty、kitty、iTerm2、WezTerm 等都可以）。
+**點她的圖**：每點一次依序換一種反應與台詞（`surprised` 驚訝、`pat-2` 拿書遮臉、`coaxed` 害羞、`redhot` 臉紅、`hum` 哼歌），播完一輪（至少 1.5 秒）後回到原本的動作與台詞；打瞌睡時點她會伸懶腰醒來。只有「等你決定」（權限確認等）時不會被打斷。點擊靠的是疊在圖上的透明區域，需要終端機支援滑鼠回報（Ghostty、kitty、iTerm2、WezTerm 等都可以）。
 
-`failed` Claude 版參考本專案的角色動作，以六張姿勢演出受驚、低頭抱書和回神。下列 GIF 均改作自 [CrossPet（lokicorvus）](https://github.com/lokicorvus/crosspet)，沿用 CC BY-NC-SA 4.0。完整署名見 [ATTRIBUTION.txt](ATTRIBUTION.txt)。
+`waving`、`running`、`running-left/right`、`waiting`、`failed`、`angry` 與輪播裡的 `idle` 是各圖庫（流暢版／經典版）原有的動畫；其他動作取自 `image26-v1/`，兩個圖庫共用。共用動作以 [CrossPet（lokicorvus）](https://github.com/lokicorvus/crosspet) 的 Claude 原圖為起始姿勢補繪而成，沿用 CC BY-NC-SA 4.0，署名見 [ATTRIBUTION.txt](ATTRIBUTION.txt)；製作紀錄見 [docs/crosspet-image26-delivery.md](docs/crosspet-image26-delivery.md)，各狀態與動作的對照見 [docs/crosspet-state-replacement.md](docs/crosspet-state-replacement.md)。
 
-| 角色 | 動作預覽 |
-| --- | --- |
-| Claude | ![Claude 失敗動畫](tools/assets/crosspet/claude/gif/failed.gif) |
-| DeepSeek Hoodie | ![DeepSeek Hoodie 失敗動畫](tools/assets/crosspet/deepseek-hoodie/gif/failed.gif) |
-| DeepSeek | ![DeepSeek 失敗動畫](tools/assets/crosspet/deepseek/gif/failed.gif) |
-| Egg Claude Hoodie | ![Egg Claude Hoodie 彩蛋動畫](tools/assets/crosspet/egg-claude-hoodie/gif/preview.gif) |
-| Egg Claude | ![Egg Claude 彩蛋動畫](tools/assets/crosspet/egg-claude/gif/preview.gif) |
-
-[角色素材目錄](tools/assets/crosspet)中的 `webp/` 保留全部原圖，`gif/` 收錄由多張相關姿勢組成的短片。Claude 與兩種 DeepSeek 造型有待機、失敗、工作、詢問、睡醒、安撫、左右探頭等片段，DeepSeek 另有吃飯片段。兩個彩蛋造型則各自播放扮演、被發現、現身、道別。每支 GIF 都使用不同姿勢推進動作；原圖只有單一姿勢且找不到可銜接場景的素材留在 `webp/`。
-
-`angry` 的原圖是 `tools/build_angry.py` 用叉腰的姿勢圖 `tools/assets/angry-pose.png`（以原角色為參考另外生成）做成的：往前傾兩次，頭上的 Twemoji 💢（CC BY 4.0，署名見 `plugin/ATTRIBUTION.txt`）一跳一跳。字元畫模式沒有這組幀，生氣時改畫 `failed`。
+`failed` 是以本專案角色動作為參考補繪的六張抱書反應（`tools/build_failed.py`）。`angry` 的原圖是 `tools/build_angry.py` 用叉腰的姿勢圖 `tools/assets/angry-pose.png`（以原角色為參考另外生成）做成的：往前傾兩次，頭上的 Twemoji 💢（CC BY 4.0，署名見 `plugin/ATTRIBUTION.txt`）一跳一跳。字元畫模式沒有這組幀，生氣時改畫 `failed`。
 
 同時符合多個狀態時，顯示哪一個由 `plugin/hooks/mood.ts` 的 `pickState()` 決定。
 
@@ -393,9 +400,10 @@ fi
 
 | 想改什麼 | 檔案 |
 |---|---|
-| 狀態優先順序 | `plugin/hooks/mood.ts` → `pickState()` |
+| 狀態優先順序、疲累的門檻 | `plugin/hooks/mood.ts` → `pickState()`、`TIRED_AFTER_MS` |
+| 各工具的姿勢、待機輪播、共用動作的節奏 | `plugin/hooks/register.tsx` → `TOOL_ANIM`、`IDLE_ROTATION`、`EXTRA_TIMING` |
 | 對話泡泡文字、各工具的描述 | `plugin/hooks/register.tsx` → `describeTool()`、`TITLE` |
-| 收起、打瞌睡、散步的時間 | `plugin/hooks/register.tsx` 開頭的常數 |
+| 收起、打瞌睡、散步、頭暈與抱書走路的門檻 | `plugin/hooks/register.tsx` 開頭的常數 |
 | 點擊的反應、台詞、生氣的門檻 | `plugin/hooks/register.tsx` → `POKES`、`ANGRY_LINES`、`POKE_ANGRY_AT`、`POKE_WINDOW_MS` |
 | 生氣動畫的 💢 位置、大小、前傾與跺腳 | `tools/build_angry.py`，改完執行 `uv run --with pillow --with numpy python tools/build_angry.py` |
 | 動畫尺寸、色數、換圖庫 | `tools/build_frames.py` 的 `SIZES`（字元畫）、`IMAGE_ROWS`（原圖）、`CROP`（上方列的上半身裁切），改完重新產生 |
@@ -415,6 +423,8 @@ python tools/build_frames.py --smooth path/to/smooth.png --classic path/to/class
 # build_frames.py 會清空 plugin/assets/<set>/，之後要重新產生失敗和生氣的幀
 python tools/build_failed.py
 python tools/build_angry.py
+# 共用動作：從 image26-v1/ 複製 PNG 到 plugin/assets/extra/，並產生 frames-extra.ts
+uv run --with pillow --with numpy python tools/build_extra.py image26-v1
 ```
 
 修改後的檢查：
@@ -459,12 +469,15 @@ claude-chibi-cli/
 │  ├─ hooks/sprite.ts                幀解碼 → Raster 四分塊字元
 │  ├─ hooks/frames-smooth.ts         流暢版字元畫動畫幀（自動產生）
 │  ├─ hooks/frames-classic.ts        經典版字元畫動畫幀（自動產生）
+│  ├─ hooks/frames-extra.ts          共用動作的字元畫動畫幀（自動產生）
 │  ├─ assets/<圖庫>/<動作>/<n>.png    原圖動畫幀，全身（自動產生）
 │  ├─ assets/<圖庫>/<動作>/<n>-bust.png  原圖動畫幀，上半身（上方列用）
+│  ├─ assets/extra/<動作>/            共用動作的原圖動畫幀（兩個圖庫共用）
 │  ├─ types/index.d.ts               $.state 型別契約
 │  └─ tests/render.test.tsx          繪製測試
 ├─ tools/build_frames.py             精靈圖 → 動畫幀轉換
 ├─ tools/build_angry.py              叉腰姿勢圖 → 生氣動畫幀（原圖）
+├─ tools/build_extra.py              image26-v1 → 共用動作的動畫幀
 ├─ tools/assets/                     生氣動畫的素材（叉腰姿勢、Twemoji 💢）
 ├─ tools/make_readme_images.py       README 示意圖產生器
 ├─ docs/images/                      README 的示意 GIF
