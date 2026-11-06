@@ -32,3 +32,8 @@ CrossPet Claude 失敗動畫改作（CC BY-NC-SA 4.0）：
 - 由 tools/build_extra.py 複製 PNG 影格，並縮小、減色為字元畫。補繪與改作沿用 CC BY-NC-SA 4.0。
 - 原圖：https://github.com/lokicorvus/crosspet/tree/5c64326b6e7fc175eda0360c0bb5c4732541d138/characters/claude
 - 授權：https://github.com/lokicorvus/crosspet/blob/5c64326b6e7fc175eda0360c0bb5c4732541d138/characters/LICENSE.md
+
+素材修正版 v1（tools/assets/plugin-assets-corrected-v1/，0.5.2 起為插件素材）：
+- 以 plugin/assets 既有影格為來源，校正髮色、比例與站位；sorry、stretch、clawd、delegating、compact 由內建 imagegen
+  重新繪製六格姿勢（模型版本無法驗證）。製作紀錄見 docs/plugin-assets-corrections-v1-delivery.md。
+  補繪為本專案改作，沿用 CC BY-NC-SA 4.0。

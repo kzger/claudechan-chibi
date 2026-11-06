@@ -25,6 +25,7 @@ import argparse
 import base64
 import json
 import shutil
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -232,7 +233,21 @@ def build_set(name: str, src: Path) -> str:
     return f"{name}: bbox={bbox} cells -> {out.name} ({out.stat().st_size // 1024} KiB), png -> assets/{name} ({png_kib} KiB)"
 
 
+FORCE = "--overwrite-corrected"
+
+
+def refuse_unless_forced(script: str) -> None:
+    """plugin/assets now holds the corrected art (tools/build_corrected.py); old builders would undo it."""
+    if FORCE not in sys.argv:
+        sys.exit(
+            f"{script} rebuilds plugin/assets from the old sources and would overwrite the corrected art.\n"
+            f"Use tools/build_corrected.py instead, or pass {FORCE} if you really mean to."
+        )
+    sys.argv.remove(FORCE)
+
+
 def main() -> None:
+    refuse_unless_forced("build_frames.py")
     ap = argparse.ArgumentParser()
     ap.add_argument("--smooth", type=Path, required=True, help="native-smooth spritesheet.png (Codex v1, 1536x1872)")
     ap.add_argument("--classic", type=Path, required=True, help="claude-chibi spritesheet-hover-calm.png (Codex v1, 1536x1872)")

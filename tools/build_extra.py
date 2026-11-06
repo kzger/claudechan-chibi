@@ -21,7 +21,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-from build_frames import PALETTE_COLORS, ROOT, SIZES, best_cells, quad_pixels, state_box
+from build_frames import PALETTE_COLORS, ROOT, SIZES, best_cells, quad_pixels, refuse_unless_forced, state_box
 
 # state name in the mod -> action folder in image26-v1. image26's own idle is
 # 'idle-1' here: 'idle' stays each set's original, which joins the rotation.
@@ -67,6 +67,7 @@ def frame_paths(folder: Path) -> list[Path]:
 
 
 def main() -> None:
+    refuse_unless_forced("build_extra.py")
     src = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "image26-v1"
     asset_dir = ROOT / "plugin" / "assets" / "extra"
     if asset_dir.exists():

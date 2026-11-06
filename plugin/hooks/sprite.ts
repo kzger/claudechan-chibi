@@ -18,7 +18,7 @@ export type StateName =
   | 'review'
   | 'angry'
 
-/** The states the Codex spritesheets hold; 'angry' is drawn by tools/build_angry.py (PNG only). */
+/** The states every frames-<set>.ts holds; 'angry' (PNG-drawn, tools/build_angry.py) may have cells too. */
 export type SheetState = Exclude<StateName, 'angry'>
 
 /**
@@ -80,8 +80,8 @@ export type SpriteSet = {
  */
 export type StateFrames = { durations: number[]; big: string[]; small: string[]; palette?: number[]; dir?: string }
 
-/** A set as tools/build_frames.py writes it: the spritesheet's states only. */
-export type SheetSet = Omit<SpriteSet, 'states'> & { states: Record<SheetState, StateFrames> }
+/** A set as tools/build_corrected.py (or the older build_frames.py, without 'angry') writes it. */
+export type SheetSet = Omit<SpriteSet, 'states'> & { states: Record<SheetState, StateFrames> & { angry?: StateFrames } }
 
 /** The shared actions as tools/build_extra.py writes them; their timing is set in register.tsx. */
 export type ExtraSheet = { palette: number[]; states: Record<ExtraName, { big: string[]; small: string[] }> }

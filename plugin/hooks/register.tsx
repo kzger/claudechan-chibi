@@ -306,10 +306,12 @@ const PNG_CACHE_MAX = 300 // frames kept as base64: a few states at both sizes
 type $T = EngineInterface
 
 /**
- * The set with 'angry' added: its PNG frames come from tools/build_angry.py;
- * in cells, which have none, she pouts with the 'failed' frames instead.
+ * The set with 'angry' sure to be there: tools/build_corrected.py writes its
+ * cells from the angry PNGs; a set built without them pouts with the
+ * 'failed' cells instead.
  */
 function withAngry(set: SheetSet): BaseSet {
+  if (set.states.angry) return { ...set, states: { ...set.states, angry: set.states.angry } }
   const durations = [...Array(7).fill(120), 240]
   const { big, small } = set.states.failed
   const sample = (frames: string[]) => durations.map((_, i) => frames[Math.floor(i * frames.length / durations.length)]!)

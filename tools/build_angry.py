@@ -96,5 +96,11 @@ def build(name: str) -> str:
 
 
 if __name__ == "__main__":
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from build_frames import refuse_unless_forced
+
+    refuse_unless_forced("build_angry.py")
     for n in SETS:
         print(build(n))

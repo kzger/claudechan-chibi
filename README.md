@@ -1,6 +1,6 @@
 # Claude ちゃん・終端機陪伴（claudechan-chibi）
 
-**目前版本：0.5.1**（2026-11-06）
+**目前版本：0.5.2**（2026-11-06）
 
 讓 Q 版 Claude ちゃん住進 Claude Code 的終端機介面。她會依 Claude 正在做的事切換動畫：思考、搜尋、寫檔、執行指令、派出助手、等你核准、出錯、完成……閒著時會換姿勢、哼歌、打哈欠睡著。點她的圖還會有反應，點太快會生氣。
 寬螢幕時她坐在右側面板，窄螢幕時改站在輸入框上方。
@@ -390,7 +390,9 @@ fi
 
 `waving`、`running`、`running-left/right`、`waiting`、`failed`、`angry` 與輪播裡的 `idle` 是各圖庫（流暢版／經典版）原有的動畫；其他動作取自 `image26-v1/`，兩個圖庫共用。共用動作以 [CrossPet（lokicorvus）](https://github.com/lokicorvus/crosspet) 的 Claude 原圖為起始姿勢補繪而成，沿用 CC BY-NC-SA 4.0，署名見 [ATTRIBUTION.txt](ATTRIBUTION.txt)；製作紀錄見 [docs/crosspet-image26-delivery.md](docs/crosspet-image26-delivery.md)，各狀態與動作的對照見 [docs/crosspet-state-replacement.md](docs/crosspet-state-replacement.md)。
 
-`failed` 是以本專案角色動作為參考補繪的六張抱書反應（`tools/build_failed.py`）。`angry` 的原圖是 `tools/build_angry.py` 用叉腰的姿勢圖 `tools/assets/angry-pose.png`（以原角色為參考另外生成）做成的：往前傾兩次，頭上的 Twemoji 💢（CC BY 4.0，署名見 `plugin/ATTRIBUTION.txt`）一跳一跳。字元畫模式沒有這組幀，生氣時改畫 `failed`。
+`failed` 是以本專案角色動作為參考補繪的六張抱書反應（`tools/build_failed.py`）。`angry` 的原圖是 `tools/build_angry.py` 用叉腰的姿勢圖 `tools/assets/angry-pose.png`（以原角色為參考另外生成）做成的：往前傾兩次，頭上的 Twemoji 💢（CC BY 4.0，署名見 `plugin/ATTRIBUTION.txt`）一跳一跳。字元畫模式的生氣幀由同一組原圖轉成。
+
+0.5.2 起，三組原圖（`smooth`、`classic`、`extra`）都換成 `tools/assets/plugin-assets-corrected-v1/` 的修正版：統一髮色、人物比例與站位（一般站姿身體中心 x=91、腳底 y=178），兩個圖庫的畫布也統一為全身 186×184、上半身 130×125。`sorry`、`stretch`、`clawd`、`delegating`、`compact` 為重新繪製的姿勢。修正紀錄見 [docs/plugin-assets-corrections-v1-delivery.md](docs/plugin-assets-corrections-v1-delivery.md)。
 
 同時符合多個狀態時，顯示哪一個由 `plugin/hooks/mood.ts` 的 `pickState()` 決定。
 
@@ -405,8 +407,8 @@ fi
 | 對話泡泡文字、各工具的描述 | `plugin/hooks/register.tsx` → `describeTool()`、`TITLE` |
 | 收起、打瞌睡、散步、頭暈與抱書走路的門檻 | `plugin/hooks/register.tsx` 開頭的常數 |
 | 點擊的反應、台詞、生氣的門檻 | `plugin/hooks/register.tsx` → `POKES`、`ANGRY_LINES`、`POKE_ANGRY_AT`、`POKE_WINDOW_MS` |
-| 生氣動畫的 💢 位置、大小、前傾與跺腳 | `tools/build_angry.py`，改完執行 `uv run --with pillow --with numpy python tools/build_angry.py` |
-| 動畫尺寸、色數、換圖庫 | `tools/build_frames.py` 的 `SIZES`（字元畫）、`IMAGE_ROWS`（原圖）、`CROP`（上方列的上半身裁切），改完重新產生 |
+| 換掉某個動作的圖 | 修改 `tools/assets/plugin-assets-corrected-v1/<圖庫>/<動作>/` 的 PNG（尺寸維持 186×184／130×125），再執行 `tools/build_corrected.py` |
+| 字元畫尺寸、色數 | `tools/build_frames.py` 的 `SIZES`（字元畫）、`IMAGE_ROWS`（原圖），改完執行 `tools/build_corrected.py` |
 | 配色 | `plugin/hooks/register.tsx` 的 `THEME` |
 
 重新產生 README 的示意圖（需要 Python 3 + Pillow，以及含繁中與日文假名的字型，macOS 內建的 PingFang 即可）：
@@ -418,14 +420,11 @@ python tools/make_readme_images.py            # 寫到 docs/images/
 重新產生動畫幀（需要 Python 3 + Pillow + NumPy）：
 
 ```bash
-# 兩組 Codex v1 精靈圖（1536×1872，8×9 格，每格 192×208）
-python tools/build_frames.py --smooth path/to/smooth.png --classic path/to/classic.png
-# build_frames.py 會清空 plugin/assets/<set>/，之後要重新產生失敗和生氣的幀
-python tools/build_failed.py
-python tools/build_angry.py
-# 共用動作：從 image26-v1/ 複製 PNG 到 plugin/assets/extra/，並產生 frames-extra.ts
-uv run --with pillow --with numpy python tools/build_extra.py image26-v1
+# 從修正版 PNG 安裝三組原圖到 plugin/assets/，並重建 frames-smooth/classic/extra.ts
+uv run --with pillow --with numpy python tools/build_corrected.py
 ```
+
+`build_frames.py`、`build_extra.py`、`build_angry.py` 是從舊來源（Codex 精靈圖、`image26-v1/`、叉腰姿勢圖）產生的舊流程，會覆蓋修正版，所以預設拒絕執行；真的要用時加 `--overwrite-corrected`。`build_failed.py` 也會改寫 `failed` 的原圖與字元幀，同樣不要在修正版上執行。
 
 修改後的檢查：
 
@@ -475,9 +474,11 @@ claude-chibi-cli/
 │  ├─ assets/extra/<動作>/            共用動作的原圖動畫幀（兩個圖庫共用）
 │  ├─ types/index.d.ts               $.state 型別契約
 │  └─ tests/render.test.tsx          繪製測試
-├─ tools/build_frames.py             精靈圖 → 動畫幀轉換
-├─ tools/build_angry.py              叉腰姿勢圖 → 生氣動畫幀（原圖）
-├─ tools/build_extra.py              image26-v1 → 共用動作的動畫幀
+├─ tools/build_corrected.py          修正版 PNG → plugin/assets 與字元畫動畫幀
+├─ tools/build_frames.py             （舊流程）精靈圖 → 動畫幀轉換；字元畫的共用函式
+├─ tools/build_angry.py              （舊流程）叉腰姿勢圖 → 生氣動畫幀
+├─ tools/build_extra.py              （舊流程）image26-v1 → 共用動作的動畫幀
+├─ tools/assets/plugin-assets-corrected-v1/  修正版原圖（目前的素材來源）
 ├─ tools/assets/                     生氣動畫的素材（叉腰姿勢、Twemoji 💢）
 ├─ tools/make_readme_images.py       README 示意圖產生器
 ├─ docs/images/                      README 的示意 GIF

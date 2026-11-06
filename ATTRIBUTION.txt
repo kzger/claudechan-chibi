@@ -27,3 +27,8 @@ image26-v1 動畫與插件共用動作（CC BY-NC-SA 4.0）：
 - image26-v1/ 的 60 支動畫以 CrossPet 的 claude/webp/<動作>.webp 為起始姿勢，透過內建 imagegen 生成連續姿勢表，
   再分割、縮圖、對齊腳底；製作紀錄見 docs/crosspet-image26-delivery.md。補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
 - 其中 32 支由 tools/build_extra.py 放進 plugin/assets/extra/ 與 plugin/hooks/frames-extra.ts（idle-1 對應 idle）。
+
+素材修正版 v1（tools/assets/plugin-assets-corrected-v1/，0.5.2 起為插件素材）：
+- 以 plugin/assets 既有影格為來源，校正髮色、比例與站位；sorry、stretch、clawd、delegating、compact 由內建 imagegen
+  重新繪製六格姿勢（模型版本無法驗證）。製作紀錄見 docs/plugin-assets-corrections-v1-delivery.md。
+  補繪為本專案改作，沿用 CC BY-NC-SA 4.0。
