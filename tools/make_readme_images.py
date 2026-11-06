@@ -2,9 +2,11 @@
 
 Writes three GIFs to docs/images/:
 
-  states.gif  every animation, each at its own pace, labelled
-  band.gif    a mock-up of the narrow layout: her face beside the chip and bubble
-  pane.gif    a mock-up of the docked pane: full figure, chip, bubble, recent calls
+  states.gif  the main animations (SHOWN), each at the mod's own pace, labelled
+  band.gif    a mock-up of the narrow layout: her face beside the chip and bubble,
+              from your prompt to the answer
+  pane.gif    a mock-up of the docked pane: full figure, chip, bubble, recent calls,
+              her pose following each tool of a turn
 
 The mock-ups use the mod's THEME colours and layout; they are drawn here, not
 screenshots of a terminal. Needs Pillow and a font with Traditional Chinese and
@@ -18,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import glob
+import json
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -25,31 +28,41 @@ from PIL import Image, ImageDraw, ImageFont
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "docs" / "images"
 STEP_MS = 60  # GIF frame length; each animation picks its frame by elapsed time
-LENGTH_MS = 4200
+LENGTH_MS = 5400
+STATES_STEP_MS = 120  # states.gif is the big one: half the frame rate keeps it small
 
-# (state, frame durations in ms) as in tools/build_frames.py
-STATES = [
-    ("idle", [1680, 660, 660, 840, 840, 1920]),
-    ("waving", [140, 140, 140, 280]),
-    ("jumping", [140, 140, 140, 140, 280]),
-    ("running", [120] * 5 + [220]),
-    ("waiting", [150] * 5 + [260]),
-    ("review", [150] * 5 + [280]),
-    ("failed", [140] * 7 + [240]),
-    ("running-left", [120] * 7 + [220]),
-    ("running-right", [120] * 7 + [220]),
+# The animations states.gif shows, in order, with their labels. A set's own
+# states take their timing from plugin/hooks/frames-<set>.ts; the shared
+# actions (plugin/assets/extra/) from EXTRA_TIMING below.
+SHOWN = [
+    ("idle-1", "idle-1 待命"),
+    ("waving", "waving 你好"),
+    ("listening", "listening 收到"),
+    ("thinking", "thinking 思考"),
+    ("running", "running 閱讀"),
+    ("searching", "searching 搜尋"),
+    ("writing", "writing 寫入"),
+    ("busy_left", "busy 執行指令"),
+    ("delegating", "delegating 派工"),
+    ("waiting", "waiting 等你決定"),
+    ("proud", "proud 完成"),
+    ("oops", "oops 失敗"),
+    ("sleeping-2", "sleeping 打瞌睡"),
+    ("redhot", "redhot 被抓到偷睡"),
+    ("angry", "angry 生氣"),
 ]
-LABEL = {
-    "idle": "idle 待命",
-    "waving": "waving 揮手",
-    "jumping": "jumping 收到",
-    "running": "running 工作中",
-    "waiting": "waiting 等你決定",
-    "review": "review 完成",
-    "failed": "failed 出錯",
-    "running-left": "running-left",
-    "running-right": "running-right",
+# plugin/hooks/register.tsx EXTRA_TIMING (every other shared action: 240 ms a frame)
+EXTRA_TIMING = {
+    "idle-1": [1000, 400, 240, 240, 240, 1000],
+    "idle-2": [1000, 400, 240, 240, 240, 1000],
+    "idle-3": [1000, 400, 240, 240, 240, 1000],
+    "idle-blink": [240, 240, 1300, 1000, 240, 240],
+    "hum": 320,
+    "clawd": 320,
+    "yawn": 320,
+    "sleeping-2": 900,
 }
+ANGRY_DURATIONS = [120] * 7 + [240]  # register.tsx withAngry
 
 # plugin/hooks/register.tsx THEME
 SURFACE = "#1C1714"
@@ -60,6 +73,7 @@ MUTED = "#B9A48F"
 ACCENT = "#F08A4B"
 OK = "#9CC98A"
 AMBER = "#F2C35B"
+ERR = "#F07E6E"
 FRAME = "#5B5048"
 TERMINAL = "#0E1116"
 
@@ -114,10 +128,19 @@ def frame_at(durations: list[int], t: int) -> int:
     return 0
 
 
-def load(set_name: str, state: str, n: int, bust: bool) -> list[Image.Image]:
-    suffix = "-bust" if bust else ""
+def anim(set_name: str, state: str, bust: bool) -> tuple[list[Image.Image], list[int]]:
+    """An animation's frames (full figure or bust) and its frame durations, as the mod plays it."""
     d = ROOT / "plugin" / "assets" / set_name / state
-    return [Image.open(d / f"{i}{suffix}.png").convert("RGBA") for i in range(n)]
+    if d.is_dir():
+        sheet = json.loads((ROOT / "plugin" / "hooks" / f"frames-{set_name}.ts").read_text(encoding="utf-8").split(" = ", 1)[1])
+        durations = sheet["states"][state]["durations"] if state in sheet["states"] else ANGRY_DURATIONS
+    else:
+        d = ROOT / "plugin" / "assets" / "extra" / state
+        n = len([p for p in d.glob("*.png") if p.stem.isdigit()])
+        t = EXTRA_TIMING.get(state, 240)
+        durations = t if isinstance(t, list) else [t] * n
+    suffix = "-bust" if bust else ""
+    return [Image.open(d / f"{i}{suffix}.png").convert("RGBA") for i in range(len(durations))], durations
 
 
 def on(bg: str, img: Image.Image, size: tuple[int, int]) -> Image.Image:
@@ -129,7 +152,7 @@ def on(bg: str, img: Image.Image, size: tuple[int, int]) -> Image.Image:
     return canvas
 
 
-def save_gif(frames: list[Image.Image], path: Path) -> None:
+def save_gif(frames: list[Image.Image], path: Path, step: int = STEP_MS) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     rgb = [f.convert("RGB") for f in frames]
     # one palette shared by every frame, taken from a strip of sampled frames
@@ -140,13 +163,13 @@ def save_gif(frames: list[Image.Image], path: Path) -> None:
     palette = strip.quantize(colors=255, method=Image.Quantize.MEDIANCUT)
     pal = [f.quantize(palette=palette, dither=Image.Dither.NONE) for f in rgb]
     # drop frames identical to the one before, lengthening that one instead
-    keep, durations = [pal[0]], [STEP_MS]
+    keep, durations = [pal[0]], [step]
     for f in pal[1:]:
         if f.tobytes() == keep[-1].tobytes():
-            durations[-1] += STEP_MS
+            durations[-1] += step
         else:
             keep.append(f)
-            durations.append(STEP_MS)
+            durations.append(step)
     keep[0].save(path, save_all=True, append_images=keep[1:], duration=durations, loop=0, optimize=True, disposal=1)
     print(f"{path.relative_to(ROOT)}: {len(keep)} frames, {path.stat().st_size // 1024} KiB")
 
@@ -167,22 +190,24 @@ def bubble(draw: ImageDraw.ImageDraw, xy: tuple[int, int], said: str, font) -> N
 
 
 def states_gif(set_name: str, font_path: str, font_index: int) -> None:
-    cell_w, cell_h, label_h, gap = 150, 150, 30, 8
-    font = ImageFont.truetype(font_path, 15, index=font_index)
-    frames = {st: load(set_name, st, len(d), bust=False) for st, d in STATES}
-    W = 3 * cell_w + 4 * gap
-    H = 3 * (cell_h + label_h) + 4 * gap
+    cols, cell_w, cell_h, label_h, gap = 5, 120, 120, 26, 6
+    font = ImageFont.truetype(font_path, 14, index=font_index)
+    anims = {st: anim(set_name, st, bust=False) for st, _ in SHOWN}
+    rows = (len(SHOWN) + cols - 1) // cols
+    W = cols * cell_w + (cols + 1) * gap
+    H = rows * (cell_h + label_h) + (rows + 1) * gap
     out = []
-    for t in range(0, LENGTH_MS, STEP_MS):
+    for t in range(0, LENGTH_MS, STATES_STEP_MS):
         img = Image.new("RGBA", (W, H), SURFACE)
         draw = ImageDraw.Draw(img)
-        for k, (st, d) in enumerate(STATES):
-            x = gap + (k % 3) * (cell_w + gap)
-            y = gap + (k // 3) * (cell_h + label_h + gap)
-            img.alpha_composite(on(STAGE, frames[st][frame_at(d, t)], (cell_w, cell_h)), (x, y))
-            draw.text((x + cell_w / 2, y + cell_h + 8), LABEL[st], fill=TEXT, font=font, anchor="ma")
+        for k, (st, label) in enumerate(SHOWN):
+            frames, d = anims[st]
+            x = gap + (k % cols) * (cell_w + gap)
+            y = gap + (k // cols) * (cell_h + label_h + gap)
+            img.alpha_composite(on(STAGE, frames[frame_at(d, t)], (cell_w, cell_h)), (x, y))
+            draw.text((x + cell_w / 2, y + cell_h + 6), label, fill=TEXT, font=font, anchor="ma")
         out.append(img)
-    save_gif(out, OUT / "states.gif")
+    save_gif(out, OUT / "states.gif", STATES_STEP_MS)
 
 
 def band_gif(set_name: str, font_path: str, font_index: int) -> None:
@@ -191,16 +216,16 @@ def band_gif(set_name: str, font_path: str, font_index: int) -> None:
     bold = ImageFont.truetype(font_path, 20, index=font_index)
     small = ImageFont.truetype(font_path, 16, index=font_index)
     face_size = (160, 144)
-    script = [  # (state, chip colour, chip text, bubble)
-        ("waving", ACCENT, "♪ 你好！", "嗨！今天要做什麼？"),
-        ("running", AMBER, "✎ 工作中", "正在改 auth.ts…"),
-        ("review", OK, "✓ 完成了", "完成了！用時 1m12s ✿"),
+    script = [  # (animation, chip colour, chip text, bubble), as register.tsx's lookOf / describeTool word them
+        ("listening", ACCENT, "! 收到！", "收到！馬上處理"),
+        ("searching", AMBER, "✎ 搜尋中", "正在找 login…"),
+        ("writing", AMBER, "✎ 寫入中", "正在改 auth.ts…"),
+        ("proud", OK, "✓ 完成了", "完成了！用時 1m12s ✿"),
     ]
     out = []
     for state, colour, title, said in script:
-        d = dict(STATES)[state]
-        busts = load(set_name, state, len(d), bust=True)
-        for t in range(0, 1400, STEP_MS):
+        busts, d = anim(set_name, state, bust=True)
+        for t in range(0, 1440, STEP_MS):
             img = Image.new("RGBA", (W, H), TERMINAL)
             draw = ImageDraw.Draw(img)
             draw.rounded_rectangle((8, 8, W - 8, H - 50), radius=8, outline=FRAME, width=2)
@@ -220,9 +245,12 @@ def pane_gif(set_name: str, font_path: str, font_index: int) -> None:
     split = 470
     font = ImageFont.truetype(font_path, 18, index=font_index)
     small = ImageFont.truetype(font_path, 16, index=font_index)
-    state = "running"
-    d = dict(STATES)[state]
-    fulls = load(set_name, state, len(d), bust=False)
+    # One turn: each tool puts her in its own pose (register.tsx TOOL_ANIM).
+    steps = [  # (animation, chip, bubble, chat lines so far, recent calls)
+        ("running", "✎ 工作中", "正在讀 auth.ts…", 3, [("…", AMBER, "Read", "auth.ts")]),
+        ("writing", "✎ 寫入中", "正在改 auth.ts…", 4, [("✓", OK, "Read", "auth.ts"), ("…", AMBER, "Edit", "auth.ts")]),
+        ("busy_left", "✎ 執行中", "正在執行 npm test…", 5, [("✓", OK, "Read", "auth.ts"), ("✓", OK, "Edit", "auth.ts"), ("…", AMBER, "Bash", "npm test")]),
+    ]
     chat = [
         ("❯ 幫我重構 auth 模組", TEXT),
         ("", TEXT),
@@ -230,29 +258,30 @@ def pane_gif(set_name: str, font_path: str, font_index: int) -> None:
         ("● Edit src/auth.ts", MUTED),
         ("● Bash npm test", MUTED),
     ]
-    recent = [("✓", OK, "Read", "auth.ts"), ("✓", OK, "Edit", "auth.ts"), ("…", AMBER, "Bash", "npm test")]
     out = []
-    for t in range(0, 2400, STEP_MS):
-        img = Image.new("RGBA", (W, H), TERMINAL)
-        draw = ImageDraw.Draw(img)
-        for i, (line, colour) in enumerate(chat):
-            text(draw, (20, 24 + i * 30), line, colour, font)
-        draw.line((split, 0, split, H), fill=FRAME, width=2)
-        draw.text((split + 14, 8), "Claude ちゃん", fill=MUTED, font=small)
-        text(draw, (W - 26, 8), "✕", MUTED, small)
-        draw.rectangle((split + 2, 34, W, H), fill=SURFACE)
-        img.alpha_composite(on(STAGE, fulls[frame_at(d, t)], (W - split - 2, 250)), (split + 2, 34))
-        x = chip(draw, (split + 20, 304), "✎ 工作中", AMBER, font)
-        draw.text((x + 14, 304), "Claude ちゃん", fill=ACCENT, font=font)
-        bubble(draw, (split + 20, 340), "正在執行 npm test…", font)
-        draw.text((split + 20, 408), "本輪 3 次工具 · 上輪 2m14s", fill=MUTED, font=small)
-        draw.text((split + 20, 442), "最近 ──────────────────", fill=ACCENT, font=small)
-        for i, (mark, colour, tool, target) in enumerate(recent):
-            y = 470 + i * 26
-            text(draw, (split + 20, y), mark, colour, small)
-            draw.text((split + 44, y), tool, fill=TEXT, font=small)
-            draw.text((split + 100, y), target, fill=MUTED, font=small)
-        out.append(img)
+    for n, (state, title, said, lines, recent) in enumerate(steps):
+        fulls, d = anim(set_name, state, bust=False)
+        for t in range(0, 1680, STEP_MS):
+            img = Image.new("RGBA", (W, H), TERMINAL)
+            draw = ImageDraw.Draw(img)
+            for i, (line, colour) in enumerate(chat[:lines]):
+                text(draw, (20, 24 + i * 30), line, colour, font)
+            draw.line((split, 0, split, H), fill=FRAME, width=2)
+            draw.text((split + 14, 8), "Claude ちゃん", fill=MUTED, font=small)
+            text(draw, (W - 26, 8), "✕", MUTED, small)
+            draw.rectangle((split + 2, 34, W, H), fill=SURFACE)
+            img.alpha_composite(on(STAGE, fulls[frame_at(d, t)], (W - split - 2, 250)), (split + 2, 34))
+            x = chip(draw, (split + 20, 304), title, AMBER, font)
+            draw.text((x + 14, 304), "Claude ちゃん", fill=ACCENT, font=font)
+            bubble(draw, (split + 20, 340), said, font)
+            draw.text((split + 20, 408), f"本輪 {n + 1} 次工具 · 上輪 2m14s", fill=MUTED, font=small)
+            draw.text((split + 20, 442), "最近 ──────────────────", fill=ACCENT, font=small)
+            for i, (mark, colour, tool, target) in enumerate(recent):
+                y = 470 + i * 26
+                text(draw, (split + 20, y), mark, colour, small)
+                draw.text((split + 44, y), tool, fill=TEXT, font=small)
+                draw.text((split + 100, y), target, fill=MUTED, font=small)
+            out.append(img)
     save_gif(out, OUT / "pane.gif")
 
 

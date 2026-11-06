@@ -7,24 +7,26 @@
 
 <p align="center">
   <img src="docs/images/pane.gif" alt="寬螢幕：右側面板（示意圖）" width="640"><br>
-  <sub>寬螢幕：停靠在對話右側的面板（示意圖）</sub>
+  <sub>寬螢幕：停靠在對話右側的面板，姿勢隨工具切換：閱讀 → 寫入 → 執行指令（示意圖）</sub>
 </p>
 
 <p align="center">
   <img src="docs/images/band.gif" alt="窄螢幕：輸入框上方的面板（示意圖）" width="560"><br>
-  <sub>窄螢幕：輸入框上方的面板，只畫上半身（示意圖）</sub>
+  <sub>窄螢幕：輸入框上方的面板，只畫上半身：收到 → 搜尋 → 寫入 → 完成（示意圖）</sub>
 </p>
 
 <details>
-<summary><b>基本動畫一覽</b></summary>
+<summary><b>主要動畫一覽</b></summary>
 
-<p align="center"><img src="docs/images/states.gif" alt="基本動畫" width="470"></p>
+<p align="center"><img src="docs/images/states.gif" alt="主要動畫" width="636"></p>
+
+<p align="center"><sub>各動作以 mod 實際的節奏播放；完整清單見下方「事件與動畫」</sub></p>
 
 </details>
 
 > 以上為依 mod 的版面與配色繪製的示意圖（原圖模式），實際外觀依終端機與視窗大小而定。
 
-圖像使用 Codex 寵物的兩組精靈圖（流暢版 / 經典版），有兩種繪製方式，會自動選擇：
+圖像有兩組圖庫（流暢版 / 經典版），各自有基本動作，另外共用 30 多種新增動作；兩組都已統一髮色、比例與站位。繪製方式有兩種，會自動選擇：
 
 | 繪製方式 | 終端機 | 畫質 |
 |---|---|---|
