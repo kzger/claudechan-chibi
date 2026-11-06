@@ -1,6 +1,6 @@
 # Claude ちゃん・終端機陪伴（claudechan-chibi）
 
-**目前版本：0.5.2**（2026-11-06）
+**目前版本：0.5.3**（2026-11-06）
 
 讓 Q 版 Claude ちゃん住進 Claude Code 的終端機介面。她會依 Claude 正在做的事切換動畫：思考、搜尋、寫檔、執行指令、派出助手、等你核准、出錯、完成……閒著時會換姿勢、哼歌、打哈欠睡著。點她的圖還會有反應，點太快會生氣。
 寬螢幕時她坐在右側面板，窄螢幕時改站在輸入框上方。
@@ -360,7 +360,7 @@ fi
 | 動畫 | 何時出現 | 播放方式 |
 |---|---|---|
 | `waving` 揮手 | 開啟 session | 播三輪 |
-| `stretch` 伸懶腰 | 打瞌睡時你送出 prompt 或點她 | 播一輪 |
+| `redhot` 臉紅 | 打瞌睡時你送出 prompt 或點她（被抓到偷睡） | 播一輪 |
 | `listening` 聆聽 | 你送出 prompt（「收到！」） | 播兩輪 |
 | `thinking` 思考 | 這一輪開始、還沒用任何工具 | 持續 |
 | `running` 閱讀 | Read，以及下面沒列到的工具 | 持續 |
@@ -386,7 +386,7 @@ fi
 | `annoyed` 不耐煩 | 4 秒內第 2 次點她（「別一直戳啦」） | 播一輪 |
 | `forgiven` 原諒 | 生氣結束後 | 播一輪 |
 
-**點她的圖**：每點一次依序換一種反應與台詞（`surprised` 驚訝、`pat-2` 拿書遮臉、`coaxed` 害羞、`redhot` 臉紅、`hum` 哼歌），播完一輪（至少 1.5 秒）後回到原本的動作與台詞；打瞌睡時點她會伸懶腰醒來。只有「等你決定」（權限確認等）時不會被打斷。點擊靠的是疊在圖上的透明區域，需要終端機支援滑鼠回報（Ghostty、kitty、iTerm2、WezTerm 等都可以）。
+**點她的圖**：每點一次依序換一種反應與台詞（`surprised` 驚訝、`pat-2` 拿書遮臉、`coaxed` 害羞、`hum` 哼歌），播完一輪（至少 1.5 秒）後回到原本的動作與台詞；打瞌睡時點她會臉紅醒來（「啊…被你看到我在打瞌睡了！」）。只有「等你決定」（權限確認等）時不會被打斷。點擊靠的是疊在圖上的透明區域，需要終端機支援滑鼠回報（Ghostty、kitty、iTerm2、WezTerm 等都可以）。
 
 `waving`、`running`、`running-left/right`、`waiting`、`failed`、`angry` 與輪播裡的 `idle` 是各圖庫（流暢版／經典版）原有的動畫；其他動作取自 `image26-v1/`，兩個圖庫共用。共用動作以 [CrossPet（lokicorvus）](https://github.com/lokicorvus/crosspet) 的 Claude 原圖為起始姿勢補繪而成，沿用 CC BY-NC-SA 4.0，署名見 [ATTRIBUTION.txt](ATTRIBUTION.txt)；製作紀錄見 [docs/crosspet-image26-delivery.md](docs/crosspet-image26-delivery.md)，各狀態與動作的對照見 [docs/crosspet-state-replacement.md](docs/crosspet-state-replacement.md)。
 

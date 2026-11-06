@@ -125,11 +125,10 @@ const POKES: { anim: AnimName; text: string }[] = [
   { anim: 'surprised', text: '嗨～找我嗎？' },
   { anim: 'pat-2', text: '嘿嘿，被你發現了！' },
   { anim: 'coaxed', text: '在看什麼呢？我也要看' },
-  { anim: 'redhot', text: '我有在努力喔！' },
   { anim: 'hum', text: '……要我做什麼嗎？' },
 ]
 const POKE_WARNING = '唔…別一直戳啦'
-const WAKE_LINE = '嗯…？我醒了！'
+const WAKE_LINE = '啊…被你看到我在打瞌睡了！'
 const ANGRY_LINES = ['生氣了！不准再戳了！', '哼！', '還戳！', '不理你了啦！']
 
 const TITLE: Record<StateName, string> = {
@@ -170,7 +169,7 @@ const EXTRA_LOOK: Record<ExtraName, { as: StateName; title: string }> = {
   surprised: { as: 'waving', title: '你好！' },
   'pat-2': { as: 'waving', title: '你好！' },
   coaxed: { as: 'waving', title: '你好！' },
-  redhot: { as: 'waving', title: '你好！' },
+  redhot: { as: 'jumping', title: '醒來了' },
   annoyed: { as: 'angry', title: '別戳了' },
   forgiven: { as: 'review', title: '原諒你了' },
   thinking: { as: 'running', title: '思考中' },
@@ -246,7 +245,7 @@ let flags: Flags = {
   workAnim: 'thinking',
   isWaiting: false,
   greetUntil: 0,
-  stretchUntil: 0,
+  wakeUntil: 0,
   ackUntil: 0,
   failedUntil: 0,
   failedAnim: 'failed',
@@ -343,7 +342,7 @@ function oneShotMs(anim: AnimName): number {
   return loopMs(anim) * (isExtra(anim) ? EXTRA_REPEAT : REPEAT)
 }
 
-/** A click on her: the next reaction in turn, a stretch if she dozed, or anger when the clicks come too fast. */
+/** A click on her: the next reaction in turn, a blush if she was caught dozing, or anger when the clicks come too fast. */
 async function poke($: $T) {
   const now = await $.clock.now()
   lastActivity = now
@@ -357,7 +356,7 @@ async function poke($: $T) {
     flags = { ...flags, now, angryUntil, forgivenUntil: angryUntil + loopMs('forgiven'), pokeUntil: 0 }
     bubble = (isNew ? ANGRY_LINES[0] : ANGRY_LINES[1 + (pokes.length % (ANGRY_LINES.length - 1))]) ?? '哼！'
   } else if (isDozing) {
-    flags = { ...flags, now, pokeAnim: 'stretch', pokeUntil: now + loopMs('stretch') }
+    flags = { ...flags, now, pokeAnim: 'redhot', pokeUntil: now + Math.max(POKE_MIN_MS, loopMs('redhot')) }
     bubble = WAKE_LINE
   } else if (pokes.length === POKE_ANGRY_AT - 1) {
     flags = { ...flags, now, pokeAnim: 'annoyed', pokeUntil: now + Math.max(POKE_MIN_MS, loopMs('annoyed')) }
@@ -773,9 +772,9 @@ export const register: Register = on => {
     if (e.command || e.isMeta) return next(e)
     const now = await $.clock.now()
     lastActivity = now
-    // Woken from a doze she stretches first, then listens.
-    const stretchUntil = isDozing ? now + loopMs('stretch') : 0
-    flags = { ...flags, stretchUntil, ackUntil: Math.max(now, stretchUntil) + oneShotMs('listening'), failedUntil: 0, reviewUntil: 0 }
+    // Caught dozing she blushes first, then listens.
+    const wakeUntil = isDozing ? now + loopMs('redhot') : 0
+    flags = { ...flags, wakeUntil, ackUntil: Math.max(now, wakeUntil) + oneShotMs('listening'), failedUntil: 0, reviewUntil: 0 }
     await setView($, { bubble: '收到！馬上開始', isDozing: false })
     await wake($)
     // A pane opened unasked waits below the dock's width; opened now, at the

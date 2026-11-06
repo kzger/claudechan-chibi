@@ -239,6 +239,40 @@ test('she yawns, then sleeps: the doze plays the shared frames', async ($, on) =
   await ui.unmount()
 })
 
+test('caught dozing she blushes, whether a click or a prompt wakes her', async ($, on) => {
+  const clock = mock.clock(on)
+  mock.store(on)
+  on('command.register', () => ({ value: { command: 'chibi' } }))
+  on('ui.open', () => ({ value: { isPlaced: true } }))
+  on('ui.panes', () => ({ value: [] }))
+  on('ui.blit', () => ({ value: {} }))
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  on('prompt.submit', (_, e) => ({ text: e.text }))
+  const paths: string[] = []
+  on('fs.read', (_, e) => {
+    paths.push(String(e.path))
+    return { value: { base64: PNG } }
+  })
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+  const blushed = () => paths.some(p => p.includes('/assets/extra/redhot/'))
+
+  await clock.advance(125_000)
+  expect(blushed()).toBe(false)
+  await ui.pointer({ type: 'down', x: 1, y: 1, button: 'left', in: 'poke-band' })
+  await clock.settle()
+  expect(blushed()).toBe(true)
+  expect(await ui.find({ type: 'Text', text: /被你看到我在打瞌睡了/ })).toBeDefined()
+
+  paths.length = 0
+  await clock.advance(125_000)
+  await $.prompt.submit({ text: 'hi' })
+  await clock.settle()
+  expect(blushed()).toBe(true)
+  expect(paths.some(p => p.includes('/assets/extra/stretch/'))).toBe(false)
+  await ui.unmount()
+})
+
 test('each tool puts her in its pose; Read keeps the set’s own', async ($, on) => {
   const clock = mock.clock(on)
   mock.store(on)

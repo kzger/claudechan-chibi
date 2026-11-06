@@ -35,7 +35,7 @@
 | 情境 | 何時出現 | 目前畫面 | 候選 | 建議 | 決定 |
 |---|---|---|---|---|---|
 | 打瞌睡 | 待機超過 20 秒（0.5.1 起改為 2 分鐘） | 停在 `idle` 第 3 幀（閉眼）不動 | [yawn](../image26-v1/yawn.gif)、[sleeping-2](../image26-v1/sleeping-2.gif) | 先播一次 `yawn`，接著循環 `sleeping-2` | 照建議 |
-| 被戳 | 點她一下，五種反應輪流 | 依序借用 `waving`、`jumping`、`review`、`running`、`waiting` | [surprised](../image26-v1/surprised.gif)、[pat-2](../image26-v1/pat-2.gif)（拿書遮臉）、[coaxed](../image26-v1/coaxed.gif)（害羞笑）、[redhot](../image26-v1/redhot.gif)（臉紅）、[hum](../image26-v1/hum.gif) | 依序換成 `surprised`「嗨～找我嗎？」、`pat-2`「嘿嘿，被你發現了！」、`coaxed`「在看什麼呢？我也要看」、`redhot`「我有在努力喔！」、`hum`「……要我做什麼嗎？」 | 照建議 |
+| 被戳 | 點她一下，五種反應輪流 | 依序借用 `waving`、`jumping`、`review`、`running`、`waiting` | [surprised](../image26-v1/surprised.gif)、[pat-2](../image26-v1/pat-2.gif)（拿書遮臉）、[coaxed](../image26-v1/coaxed.gif)（害羞笑）、[redhot](../image26-v1/redhot.gif)（臉紅）、[hum](../image26-v1/hum.gif) | 依序換成 `surprised`「嗨～找我嗎？」、`pat-2`「嘿嘿，被你發現了！」、`coaxed`「在看什麼呢？我也要看」、`redhot`「我有在努力喔！」、`hum`「……要我做什麼嗎？」 | 照建議；0.5.3 起拿掉 `redhot`，剩四種輪流 |
 | 再戳就生氣的警告 | 4 秒內第二次戳 | 輪到哪個反應就播哪個，只換對白為「唔…別一直戳啦」 | [annoyed](../image26-v1/annoyed.gif) | 換成 `annoyed` | 照建議 |
 
 ## 3. 新增狀態
@@ -97,7 +97,7 @@
 | 情境 | 觸發條件 | 候選 | 建議 | 決定 |
 |---|---|---|---|---|
 | 待機輪播 | 待機中，每循環幾輪隨機換一個 | [idle-2](../image26-v1/idle-2.gif)、[idle-3](../image26-v1/idle-3.gif)、[idle-blink](../image26-v1/idle-blink.gif)、[hum](../image26-v1/hum.gif)（哼歌）、[clawd](../image26-v1/clawd.gif)（抱橘色玩偶） | 全部加入輪播，`clawd` 出現機率較低 | 照建議，並加入原版 `idle` |
-| 被叫醒 | 打瞌睡時有新動作（你送出指令、點她） | [stretch](../image26-v1/stretch.gif)（伸懶腰） | 播一次 `stretch`，再進入原本該播的狀態 | 照建議 |
+| 被叫醒 | 打瞌睡時有新動作（你送出指令、點她） | [stretch](../image26-v1/stretch.gif)（伸懶腰） | 播一次 `stretch`，再進入原本該播的狀態 | 照建議；0.5.3 起改為 `redhot`（被抓到偷睡而臉紅），`stretch` 不再使用 |
 | 消氣 | 生氣結束後 | [forgiven](../image26-v1/forgiven.gif) | `forgiven` | 照建議 |
 
 ## 4. 目前沒有安排的動作
@@ -123,7 +123,7 @@
 | `busy_right` | 8 | 0.96 秒 | [GIF](../image26-v1/busy_right.gif) | [GIF](../image26-v1/busy_right-bust.gif) | 3-1 執行指令 |
 | `bye` | 4 | 0.48 秒 | [GIF](../image26-v1/bye.gif) | [GIF](../image26-v1/bye-bust.gif) | 3-2 道別 |
 | `clawd` | 6 | 0.72 秒 | [GIF](../image26-v1/clawd.gif) | [GIF](../image26-v1/clawd-bust.gif) | 3-4 待機輪播 |
-| `coaxed` | 6 | 0.72 秒 | [GIF](../image26-v1/coaxed.gif) | [GIF](../image26-v1/coaxed-bust.gif) | 2 被戳 |
+| `coaxed` | 6 | 0.72 秒 | [GIF](../image26-v1/coaxed.gif) | [GIF](../image26-v1/coaxed-bust.gif) | 0.5.3 起改為被叫醒（原為 2 被戳） |
 | `compact` | 6 | 0.72 秒 | [GIF](../image26-v1/compact.gif) | [GIF](../image26-v1/compact-bust.gif) | 3-3 壓縮對話 |
 | `delegating` | 6 | 0.72 秒 | [GIF](../image26-v1/delegating.gif) | [GIF](../image26-v1/delegating-bust.gif) | 3-1 派工 |
 | `dizzy` | 6 | 0.72 秒 | [GIF](../image26-v1/dizzy.gif) | [GIF](../image26-v1/dizzy-bust.gif) | 3-3 連續失敗 |
@@ -154,20 +154,20 @@
 | `idle-blink` | 6 | 0.72 秒 | [GIF](../image26-v1/idle-blink.gif) | [GIF](../image26-v1/idle-blink-bust.gif) | 1 `idle`；3-4 待機輪播 |
 | `listening` | 6 | 0.72 秒 | [GIF](../image26-v1/listening.gif) | [GIF](../image26-v1/listening-bust.gif) | 1 `jumping` |
 | `oops` | 6 | 0.72 秒 | [GIF](../image26-v1/oops.gif) | [GIF](../image26-v1/oops-bust.gif) | 3-3 工具失敗 |
-| `pat-2` | 6 | 0.72 秒 | [GIF](../image26-v1/pat-2.gif) | [GIF](../image26-v1/pat-2-bust.gif) | 2 被戳 |
+| `pat-2` | 6 | 0.72 秒 | [GIF](../image26-v1/pat-2.gif) | [GIF](../image26-v1/pat-2-bust.gif) | 0.5.3 起改為被叫醒（原為 2 被戳） |
 | `portrait` | 6 | 1.08 秒 | [GIF](../image26-v1/portrait.gif) | [GIF](../image26-v1/portrait-bust.gif) | 4 portrait |
 | `portrait-card` | 6 | 1.08 秒 | [GIF](../image26-v1/portrait-card.gif) | [GIF](../image26-v1/portrait-card-bust.gif) | 4 portrait-card |
 | `proud` | 6 | 0.72 秒 | [GIF](../image26-v1/proud.gif) | [GIF](../image26-v1/proud-bust.gif) | 1 `review`；3-3 完成 |
 | `puffed` | 8 | 0.96 秒 | [GIF](../image26-v1/puffed.gif) | [GIF](../image26-v1/puffed-bust.gif) | 1 `angry`；3-3 工具被拒絕 |
 | `reading-2` | 6 | 0.72 秒 | [GIF](../image26-v1/reading-2.gif) | [GIF](../image26-v1/reading-2-bust.gif) | 1 `running`；3-1 閱讀 |
-| `redhot` | 8 | 0.96 秒 | [GIF](../image26-v1/redhot.gif) | [GIF](../image26-v1/redhot-bust.gif) | 2 被戳 |
+| `redhot` | 8 | 0.96 秒 | [GIF](../image26-v1/redhot.gif) | [GIF](../image26-v1/redhot-bust.gif) | 0.5.3 起改為被叫醒（原為 2 被戳） |
 | `running` | 6 | 0.48 秒 | [GIF](../image26-v1/running.gif) | [GIF](../image26-v1/running-bust.gif) | 1 `running-right` / `running-left` |
 | `searching` | 6 | 0.72 秒 | [GIF](../image26-v1/searching.gif) | [GIF](../image26-v1/searching-bust.gif) | 3-1 搜尋 |
 | `sleeping-2` | 6 | 1.08 秒 | [GIF](../image26-v1/sleeping-2.gif) | [GIF](../image26-v1/sleeping-2-bust.gif) | 2 打瞌睡 |
 | `sorry` | 6 | 0.72 秒 | [GIF](../image26-v1/sorry.gif) | [GIF](../image26-v1/sorry-bust.gif) | 3-3 被打斷 |
-| `stretch` | 6 | 0.72 秒 | [GIF](../image26-v1/stretch.gif) | [GIF](../image26-v1/stretch-bust.gif) | 3-4 被叫醒 |
+| `stretch` | 6 | 0.72 秒 | [GIF](../image26-v1/stretch.gif) | [GIF](../image26-v1/stretch-bust.gif) | 3-4 被叫醒（0.5.3 起不使用） |
 | `sulk` | 6 | 0.72 秒 | [GIF](../image26-v1/sulk.gif) | [GIF](../image26-v1/sulk-bust.gif) | 1 `angry`；3-3 工具被拒絕 |
-| `surprised` | 6 | 0.72 秒 | [GIF](../image26-v1/surprised.gif) | [GIF](../image26-v1/surprised-bust.gif) | 2 被戳 |
+| `surprised` | 6 | 0.72 秒 | [GIF](../image26-v1/surprised.gif) | [GIF](../image26-v1/surprised-bust.gif) | 0.5.3 起改為被叫醒（原為 2 被戳） |
 | `swamped_left` | 8 | 0.96 秒 | [GIF](../image26-v1/swamped_left.gif) | [GIF](../image26-v1/swamped_left-bust.gif) | 1 `running-right` / `running-left`；3-1 工作量大 |
 | `swamped_right` | 8 | 0.96 秒 | [GIF](../image26-v1/swamped_right.gif) | [GIF](../image26-v1/swamped_right-bust.gif) | 1 `running-right` / `running-left`；3-1 工作量大 |
 | `thinking` | 6 | 0.72 秒 | [GIF](../image26-v1/thinking.gif) | [GIF](../image26-v1/thinking-bust.gif) | 1 `running`；3-1 構思中 |

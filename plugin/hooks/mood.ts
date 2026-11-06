@@ -23,8 +23,8 @@ export type Flags = {
   isWaiting: boolean
   /** Session just started: waving. */
   greetUntil: number
-  /** Woken from a doze by your prompt: she stretches before the nod. */
-  stretchUntil: number
+  /** Caught dozing (your prompt woke her): she blushes before the nod. */
+  wakeUntil: number
   /** You just sent a prompt: she listens ("got it"). */
   ackUntil: number
   /** A tool failed or was denied, or the turn was interrupted / errored: `failedAnim` says which. */
@@ -51,7 +51,7 @@ export type Flags = {
  * A click on her answers above all but a dialog waiting on you: anger first,
  * then the forgiving that follows it.
  * The one-shots Codex has no task state for slot in where they can be seen:
- * the stretch and the "got it" nod play just before work starts (else the
+ * the caught-dozing blush and the "got it" nod play just before work starts (else the
  * work pose would always hide them), and the greeting only while nothing
  * else is going on.
  * 'idle' is resolved by register.tsx into the rotation or the doze;
@@ -65,7 +65,7 @@ export function pickState(f: Flags): AnimName {
   if (f.failedUntil > f.now) return f.failedAnim
   if (f.compactUntil > f.now) return 'compact'
   if (f.reviewUntil > f.now) return f.reviewAnim
-  if (f.stretchUntil > f.now) return 'stretch'
+  if (f.wakeUntil > f.now) return 'redhot'
   if (f.ackUntil > f.now) return 'listening'
   if (f.isWorking) return f.now - f.turnStartedAt > TIRED_AFTER_MS ? 'tired' : f.workAnim
   if (f.greetUntil > f.now) return 'waving'
