@@ -34,7 +34,7 @@
 
 | 情境 | 何時出現 | 目前畫面 | 候選 | 建議 | 決定 |
 |---|---|---|---|---|---|
-| 打瞌睡 | 待機超過 20 秒 | 停在 `idle` 第 3 幀（閉眼）不動 | [yawn](../image26-v1/yawn.gif)、[sleeping-2](../image26-v1/sleeping-2.gif) | 先播一次 `yawn`，接著循環 `sleeping-2` | 照建議 |
+| 打瞌睡 | 待機超過 20 秒（0.5.1 起改為 2 分鐘） | 停在 `idle` 第 3 幀（閉眼）不動 | [yawn](../image26-v1/yawn.gif)、[sleeping-2](../image26-v1/sleeping-2.gif) | 先播一次 `yawn`，接著循環 `sleeping-2` | 照建議 |
 | 被戳 | 點她一下，五種反應輪流 | 依序借用 `waving`、`jumping`、`review`、`running`、`waiting` | [surprised](../image26-v1/surprised.gif)、[pat-2](../image26-v1/pat-2.gif)（拿書遮臉）、[coaxed](../image26-v1/coaxed.gif)（害羞笑）、[redhot](../image26-v1/redhot.gif)（臉紅）、[hum](../image26-v1/hum.gif) | 依序換成 `surprised`「嗨～找我嗎？」、`pat-2`「嘿嘿，被你發現了！」、`coaxed`「在看什麼呢？我也要看」、`redhot`「我有在努力喔！」、`hum`「……要我做什麼嗎？」 | 照建議 |
 | 再戳就生氣的警告 | 4 秒內第二次戳 | 輪到哪個反應就播哪個，只換對白為「唔…別一直戳啦」 | [annoyed](../image26-v1/annoyed.gif) | 換成 `annoyed` | 照建議 |
 

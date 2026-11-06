@@ -208,7 +208,7 @@ test('a click wakes her at once, not at the dozing clock’s next tick', async (
   await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
 
   const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
-  await clock.advance(60_000)
+  await clock.advance(125_000)
   expect(await ui.find({ type: 'Text', text: /打瞌睡/ })).toBeDefined()
 
   await ui.pointer({ type: 'down', x: 1, y: 1, button: 'left', in: 'poke-band' })
@@ -232,7 +232,7 @@ test('she yawns, then sleeps: the doze plays the shared frames', async ($, on) =
   })
   await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
   const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
-  await clock.advance(21_000)
+  await clock.advance(121_000)
   expect(paths.some(p => p.includes('/assets/extra/yawn/'))).toBe(true)
   await clock.advance(10_000)
   expect(paths.some(p => p.includes('/assets/extra/sleeping-2/'))).toBe(true)

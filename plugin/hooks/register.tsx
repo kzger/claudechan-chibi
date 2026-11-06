@@ -61,13 +61,13 @@ const CHIP: Record<StateName, string> = {
   review: THEME.ok,
   angry: THEME.err,
 }
-const DOZE_AFTER_MS = 20_000 // idle this long: she dozes off (a yawn, then sleep)
+const DOZE_AFTER_MS = 2 * 60_000 // idle this long: she dozes off (a yawn, then sleep)
 const WALK_EVERY_MS = 40_000 // while working, a stroll across the band this often
 const SWAMPED_AT = 30 // tool calls in one turn: she strolls under a pile of books
 const DIZZY_AT = 3 // failed tool calls in one turn: she is dizzy
 const LONG_TURN_MS = 3 * 60_000 // a turn this long ends in 'happy-2' rather than 'proud'
 const EXTRA_REPEAT = 2 // a shared action plays its slower loop twice as a one-shot
-const IDLE_BASE_LOOPS = 3 // 'idle-1' loops between two of the rotation's others
+const IDLE_BASE_LOOPS = 2 // 'idle-1' loops between two of the rotation's others
 /** What the idle rotation picks from after 'idle-1', with weights; 'idle' is the set's own. */
 const IDLE_ROTATION: { anim: AnimName; weight: number; loops: number }[] = [
   { anim: 'idle', weight: 2, loops: 1 },
