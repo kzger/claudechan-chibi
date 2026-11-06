@@ -424,6 +424,8 @@ python tools/make_readme_images.py            # 寫到 docs/images/
 uv run --with pillow --with numpy python tools/build_corrected.py
 ```
 
+`tools/assets/plugin-assets-corrected-v1/`、`image26-v1/` 等製作素材只保存在製作端，不在 git 裡（repo 保持精簡，marketplace 更新才快）；從 GitHub clone 下來的只有 `plugin/assets/` 的成品。
+
 `build_frames.py`、`build_extra.py`、`build_angry.py` 是從舊來源（Codex 精靈圖、`image26-v1/`、叉腰姿勢圖）產生的舊流程，會覆蓋修正版，所以預設拒絕執行；真的要用時加 `--overwrite-corrected`。`build_failed.py` 也會改寫 `failed` 的原圖與字元幀，同樣不要在修正版上執行。
 
 修改後的檢查：
