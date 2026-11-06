@@ -394,11 +394,11 @@ fi
 
 **點她的圖**：每點一次依序換一種反應與台詞（`surprised` 驚訝、`pat-2` 拿書遮臉、`coaxed` 害羞、`hum` 哼歌），播完一輪（至少 1.5 秒）後回到原本的動作與台詞；打瞌睡時點她會臉紅醒來（「啊…被你看到我在打瞌睡了！」）。只有「等你決定」（權限確認等）時不會被打斷。點擊靠的是疊在圖上的透明區域，需要終端機支援滑鼠回報（Ghostty、kitty、iTerm2、WezTerm 等都可以）。
 
-`waving`、`running`、`running-left/right`、`waiting`、`failed`、`angry` 與輪播裡的 `idle` 是各圖庫（流暢版／經典版）原有的動畫；其他動作取自 `image26-v1/`，兩個圖庫共用。共用動作以 [CrossPet（lokicorvus）](https://github.com/lokicorvus/crosspet) 的 Claude 原圖為起始姿勢補繪而成，沿用 CC BY-NC-SA 4.0，署名見 [ATTRIBUTION.txt](ATTRIBUTION.txt)；製作紀錄見 [docs/crosspet-image26-delivery.md](docs/crosspet-image26-delivery.md)，各狀態與動作的對照見 [docs/crosspet-state-replacement.md](docs/crosspet-state-replacement.md)。
+`waving`、`running`、`running-left/right`、`waiting`、`failed`、`angry` 與輪播裡的 `idle` 是各圖庫（流暢版／經典版）原有的動畫；其他動作取自 `image26-v1/`，兩個圖庫共用。共用動作以 [CrossPet（lokicorvus）](https://github.com/lokicorvus/crosspet) 的 Claude 原圖為起始姿勢補繪而成，沿用 CC BY-NC-SA 4.0，署名見 [ATTRIBUTION.txt](ATTRIBUTION.txt)；製作紀錄見 [docs/art-provenance.md](docs/art-provenance.md)。
 
 `failed` 是以本專案角色動作為參考補繪的六張抱書反應（`tools/build_failed.py`）。`angry` 的原圖是 `tools/build_angry.py` 用叉腰的姿勢圖 `tools/assets/angry-pose.png`（以原角色為參考另外生成）做成的：往前傾兩次，頭上的 Twemoji 💢（CC BY 4.0，署名見 `plugin/ATTRIBUTION.txt`）一跳一跳。字元畫模式的生氣幀由同一組原圖轉成。
 
-0.5.2 起，三組原圖（`smooth`、`classic`、`extra`）都換成 `tools/assets/plugin-assets-corrected-v1/` 的修正版：統一髮色、人物比例與站位（一般站姿身體中心 x=91、腳底 y=178），兩個圖庫的畫布也統一為全身 186×184、上半身 130×125。`sorry`、`stretch`、`clawd`、`delegating`、`compact` 為重新繪製的姿勢。修正紀錄見 [docs/plugin-assets-corrections-v1-delivery.md](docs/plugin-assets-corrections-v1-delivery.md)。
+0.5.2 起，三組原圖（`smooth`、`classic`、`extra`）都換成 `tools/assets/plugin-assets-corrected-v1/` 的修正版：統一髮色、人物比例與站位（一般站姿身體中心 x=91、腳底 y=178），兩個圖庫的畫布也統一為全身 186×184、上半身 130×125。`sorry`、`stretch`、`clawd`、`delegating`、`compact` 為重新繪製的姿勢。修正紀錄見 [docs/art-provenance.md](docs/art-provenance.md)。
 
 同時符合多個狀態時，顯示哪一個由 `plugin/hooks/mood.ts` 的 `pickState()` 決定。
 

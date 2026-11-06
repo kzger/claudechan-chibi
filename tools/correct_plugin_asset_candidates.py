@@ -155,4 +155,8 @@ def run(draft=False):
     print(json.dumps({'actions':len(records),'pngs':sum(v['frames']*2 for v in records.values()),'generated':[k for k,v in records.items() if v['generated']]}))
 
 if __name__=='__main__':
+    # plugin/assets is the corrected art since 0.5.2: correcting it again would stack the corrections.
+    import sys
+    from build_frames import refuse_unless_forced
+    refuse_unless_forced('correct_plugin_asset_candidates.py')
     p=argparse.ArgumentParser();p.add_argument('--draft',action='store_true');run(p.parse_args().draft)

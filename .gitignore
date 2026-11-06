@@ -4,7 +4,7 @@ plugin/.claude-plugin/types/
 tools/__pycache__/
 
 # 製作素材只留在本機，不進 git（marketplace 每次都要下載整個 repo 的最新版）。
-# 插件用到的圖在 plugin/assets/；修正版的來源與審查資料見 docs/plugin-assets-corrections-v1-delivery.md。
+# 插件用到的圖在 plugin/assets/；製作素材的位置見 docs/art-provenance.md。
 image26-v1/
 tools/assets/plugin-assets-corrected-v1/
 tools/assets/crosspet/

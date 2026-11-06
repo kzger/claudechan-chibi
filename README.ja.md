@@ -396,11 +396,11 @@ fi
 
 **絵をクリックすると**：クリックのたびに反応とセリフが順番に変わります（`surprised` 驚く、`pat-2` 本で顔を隠す、`coaxed` 照れる、`hum` 鼻歌）。1 回分（最低 1.5 秒）再生したら、元の動きとセリフに戻ります。居眠り中にクリックすると赤面して目を覚まします（「啊…被你看到我在打瞌睡了！」あっ…居眠りしてるところ見られちゃった！）。「あなたの判断待ち」（権限の確認など）のときだけは中断されません。クリックは絵に重ねた透明な領域で受けるので、ターミナルがマウスイベントを報告できる必要があります（Ghostty、kitty、iTerm2、WezTerm などは対応）。
 
-`waving`、`running`、`running-left/right`、`waiting`、`failed`、`angry` と待機ローテーションの `idle` は各絵柄（smooth／classic）の元のアニメーションです。その他の動きは `image26-v1/` から取り、両方の絵柄で共有しています。共通アクションは [CrossPet（lokicorvus）](https://github.com/lokicorvus/crosspet) の Claude の原画を開始ポーズとして描き足したもので、CC BY-NC-SA 4.0 を引き継ぎます。クレジットは [ATTRIBUTION.txt](ATTRIBUTION.txt)、制作記録は [docs/crosspet-image26-delivery.md](docs/crosspet-image26-delivery.md)、各状態と動きの対応は [docs/crosspet-state-replacement.md](docs/crosspet-state-replacement.md) を参照してください（いずれも中国語）。
+`waving`、`running`、`running-left/right`、`waiting`、`failed`、`angry` と待機ローテーションの `idle` は各絵柄（smooth／classic）の元のアニメーションです。その他の動きは `image26-v1/` から取り、両方の絵柄で共有しています。共通アクションは [CrossPet（lokicorvus）](https://github.com/lokicorvus/crosspet) の Claude の原画を開始ポーズとして描き足したもので、CC BY-NC-SA 4.0 を引き継ぎます。クレジットは [ATTRIBUTION.txt](ATTRIBUTION.txt)、制作記録は [docs/art-provenance.md](docs/art-provenance.md)（中国語）を参照してください。
 
 `failed` はこのプロジェクトのキャラクターの動きを参考に描き足した、本を抱える 6 枚の反応です（`tools/build_failed.py`）。`angry` の画像は `tools/build_angry.py` が腰に手を当てたポーズ画像 `tools/assets/angry-pose.png`（元のキャラクターを参考に別途生成）から作っています：前に 2 回乗り出し、頭の上で Twemoji の 💢（CC BY 4.0、クレジットは `plugin/ATTRIBUTION.txt`）がぴょこぴょこ跳ねます。文字モードの怒りのフレームも同じ画像から変換しています。
 
-0.5.2 から、3 組の画像（`smooth`、`classic`、`extra`）はすべて `tools/assets/plugin-assets-corrected-v1/` の修正版になりました：髪色・頭身・立ち位置を統一（通常の立ちポーズは体の中心 x=91、足元 y=178）し、2 つの絵柄のキャンバスも全身 186×184、上半身 130×125 に揃えています。`sorry`、`stretch`、`clawd`、`delegating`、`compact` は描き直したポーズです。修正記録は [docs/plugin-assets-corrections-v1-delivery.md](docs/plugin-assets-corrections-v1-delivery.md)（中国語）。
+0.5.2 から、3 組の画像（`smooth`、`classic`、`extra`）はすべて `tools/assets/plugin-assets-corrected-v1/` の修正版になりました：髪色・頭身・立ち位置を統一（通常の立ちポーズは体の中心 x=91、足元 y=178）し、2 つの絵柄のキャンバスも全身 186×184、上半身 130×125 に揃えています。`sorry`、`stretch`、`clawd`、`delegating`、`compact` は描き直したポーズです。修正記録は [docs/art-provenance.md](docs/art-provenance.md)（中国語）。
 
 複数の状態に同時に当てはまるとき、どれを表示するかは `plugin/hooks/mood.ts` の `pickState()` が決めます。
 

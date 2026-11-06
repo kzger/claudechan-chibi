@@ -1,6 +1,6 @@
 # CrossPet 圖片轉動畫製作流程
 
-更新：2026-11-05（Asia/Taipei）。供 Claude、deepseek、deepseek-hoodie 等角色後續製作使用；整理自 [Claude 本批工作單](crosspet-image26-gif-worklist.md) 與 [修正紀錄](crosspet-image26-corrections.md)。本文件是可重用流程，不代表其他角色已完成生成。
+供 deepseek、deepseek-hoodie 等角色製作動畫使用，整理自 Claude 的 image26 批次（結果見 [art-provenance.md](art-provenance.md)）。本文件是可重用流程；目前只有 Claude 完成，其他角色尚未生成。製作素材只放在製作端、不進 git。
 
 ## 開始前先建立該角色工作單
 
@@ -109,19 +109,11 @@ PNG 保留 RGBA 作高品質來源。GIF 用共用調色盤、專用透明索引
 
 每個動作記錄來源、原始姿勢表、最終提示詞、網格、共用裁切與縮放、CV ROI／位移、Bust 窗口、時序、模型可驗證資訊與最終檔案雜湊。另存整批覆蓋／驗證結果、淺深底 contact sheet、播放預覽、修正前後對照與備份。
 
-## 現有腳本的重用限制
+## 接入插件
 
-現有 `tools/*image26*.py` 是 Claude 本批工具，**尚未支援直接指定任意角色**。本次只更新文件，未改寫腳本，也未開始 deepseek 生成。轉用前至少檢查：
-
-| 工具 | 必須調整／檢查 |
-| --- | --- |
-| `build_image26_gifs.py` | OUT 路徑、動作分類、proud／avatar／edge 特例、尺寸、留白、Bust 窗口；目前 CLI 只有名稱、columns、frames、duration，沒有角色參數 |
-| `stabilize_image26.py`、`measure_image26_registration.py` | BASE／DEST、動作名單、參考動作、ROI、位移門檻；裙身 ROI `(30,110,156,180)` 不是通用值 |
-| `repair_image26_special.py` | Claude delegating／edge 專用來源與遮罩，不能直接套其他角色 |
-| `verify_image26_assets.py` | 來源／輸出／工作單路徑、表格解析、尺寸、時長與截邊例外 |
-| 預覽、對照及 contact 產生工具 | 角色路徑、動作數、修正名單與標題；完成數應由實際清單計算 |
-
-需要實作重用時，將本批來源／輸出、動作分類、尺寸、ROI、Bust、時序等集中為該批設定，再讓製作與驗證讀取一致規格；先用代表項驗證再跑整批。不要以全檔取代 `claude` 字串當作完成轉用。
+- repo 裡**沒有** image26 批次的生成／對齊腳本，新批要自行實作；把來源、輸出、動作分類、尺寸、ROI、Bust、時序集中成該批設定，製作與驗證都讀同一份，先用代表項驗證再跑整批。不要拿 `claude` 字串全檔取代當作轉用。
+- 成品要能接入插件，須符合插件的格式：`<組>/<動作>/<n>.png`（186×184）與 `<n>-bust.png`（130×125，全身的固定裁切），一般站姿身體中心 x=91、腳底 y=178。再用 `tools/build_corrected.py` 安裝並重建字元資料（見 `tools/CLAUDE.md`）。
+- 新動作要在插件裡播放，還要加進 `plugin/hooks/sprite.ts` 的型別與 `register.tsx` 的觸發邏輯（見 `plugin/CLAUDE.md`）。
 
 ## 下一批可直接使用的任務描述
 
