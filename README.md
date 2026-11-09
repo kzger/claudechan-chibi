@@ -2,7 +2,7 @@
 
 <p align="center"><b>English</b> · <a href="README.zh-TW.md">繁體中文</a> · <a href="README.ja.md">日本語</a></p>
 
-**Current version: 0.5.7** (2026-11-09)
+**Current version: 0.5.8** (2026-11-09)
 
 A chibi Claude-chan (Claude ちゃん) who lives in Claude Code's terminal UI. She changes her animation to match what Claude is doing: thinking, searching, writing files, running commands, sending out helpers, waiting for your approval, failing, finishing… When nothing is going on she shifts her pose, hums, yawns and falls asleep. Click her picture and she reacts; click too fast and she gets cross.
 On a wide screen she sits in a pane on the right; on a narrow one she stands above the prompt.
