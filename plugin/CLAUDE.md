@@ -13,12 +13,12 @@ Claude Code 的 function hooks mod：依事件切換 Claude ちゃん的動畫�
 | `hooks/register.tsx` | 所有 hook：事件 → 旗標、動畫時鐘、面板與上方列的繪製、`/chibi`、點擊反應、各工具的姿勢與台詞 |
 | `hooks/mood.ts` | `pickState()`：純函式，依旗標決定目前的動畫與優先順序 |
 | `hooks/shell.ts` | `shellWork()`：純函式，依 Bash／PowerShell 指令內容判斷寫入／搜尋／閱讀／執行 |
-| `hooks/sprite.ts` | 動畫名稱型別（`StateName`、`ExtraName`）與字元幀解碼 |
+| `hooks/sprite.ts` | 動畫名稱型別（`StateName`、`ExtraName`）、字元幀解碼、`frameStep()`（時鐘每步前進幾幀、等多久） |
 | `hooks/poke.tsx` | 疊在圖上的透明點擊區 |
 | `hooks/frames-smooth.ts`、`frames-classic.ts`、`frames-extra.ts` | 字元畫資料與色盤，**自動產生** |
 | `assets/<smooth\|classic\|extra>/<動作>/<n>.png`、`<n>-bust.png` | 原圖動畫幀，**由 `tools/build_corrected.py` 安裝** |
 | `types/index.d.ts` | `$.state` 型別契約（`view`、`prefs`、`paneShown`、`imageFailed`） |
-| `tests/` | `render.test.tsx`（繪製與事件）、`shell.test.ts`（指令分類） |
+| `tests/` | `render.test.tsx`（繪製與事件）、`shell.test.ts`（指令分類）、`sprite.test.ts`（幀節奏） |
 | `ATTRIBUTION.txt` | 隨插件發佈的署名；與根目錄 `ATTRIBUTION.txt` 同步更新 |
 
 ## 本地契約
@@ -27,8 +27,11 @@ Claude Code 的 function hooks mod：依事件切換 Claude ちゃん的動畫�
 - 素材格式：全身 186×184、Bust 130×125（全身的固定裁切）；兩組圖庫與 `extra` 共用同一舞台（一般站姿身體中心 x=91、腳底 y=178）。
 - 動畫名稱：`StateName` 是各圖庫自己的狀態，`ExtraName` 是放在 `assets/extra/`、兩組共用的動作；新增動作要同時改 `sprite.ts` 的型別、`register.tsx` 的 `EXTRA_LOOK`（標籤）與觸發邏輯。
 - 狀態優先順序只在 `mood.ts` 的 `pickState()` 決定；`register.tsx` 只設旗標（`...Until` 時間戳）。
-- 各工具的姿勢：`TOOL_ANIM`；指派背景工作（`run_in_background`、`Agent`、`Workflow`、`Monitor`、`CronCreate`、`SendMessage`、`SendToProject`、`RemoteTrigger` 的 `run`）一律 `delegating`；其餘 Bash／PowerShell 依 `shell.ts`，執行類指令輪流播 `busy_left`／`busy_right`。
-- 節奏：每幀至少 `MIN_FRAME_MS`（240ms），更短的幀會被跳過；共用動作的節奏在 `EXTRA_TIMING`，未列的一律 240ms。
+- 各工具的姿勢：`TOOL_ANIM`；指派背景工作（`run_in_background`、`Agent`、`Workflow`、`Monitor`、`CronCreate`、`SendMessage`、`SendToProject`、`RemoteTrigger` 的 `run`）一律 `delegating`（背景工作之後成功或失敗不會再改變表情）；其餘 Bash／PowerShell 依 `shell.ts`，執行類指令輪流播 `busy_left`／`busy_right`。
+- 節奏：每次繪製至少間隔 `MIN_FRAME_MS`（240ms），更短的幀和後面的幀合併（`frameStep()`），但每輪的最後一幀一定畫出；`failed` 例外，照原本節奏。`loopMs()` 用同一套算法，一次性動作的長度才會和畫面一致。共用動作的節奏在 `EXTRA_TIMING`，未列的一律 240ms。
+- 時鐘：同一時間只跑一個 `tick()`；重啟時鐘會等進行中的那次跑完。
+- 快取：PNG（約 6 MB 上限）與字元幀（600 筆）都是 LRU，滿了只丟最久沒用的，不整個清空。
+- `/chibi off` 時不輪詢面板狀態。
 - 一次性動作播幾輪：圖庫自己的狀態 3 輪，共用動作 2 輪（`oneShotMs`）。
 - `shellWork()` 會在每次工具呼叫執行：只判斷指令前 8 KB，正規表示式不得跨行回溯。
 - `tool.call` 遇到 subagent 的呼叫（有 `agentId`）不改變主畫面的狀態。

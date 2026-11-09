@@ -9,6 +9,8 @@ import { shellWork } from './shell'
 import { pickState, type Flags } from './mood'
 import {
   makeCellCache,
+  frameStep,
+  drawnLoopMs,
   spriteRows,
   type AnimName,
   type ExtraName,
@@ -305,8 +307,10 @@ let canDock: boolean | undefined
 let isDockedInBand = false
 const sites: { pane?: Site; band?: Site } = {}
 const cellsOf = makeCellCache()
+/** PNG frames as base64, least recently used first. */
 const pngCache = new Map<string, string | null>()
-const PNG_CACHE_MAX = 300 // frames kept as base64: a few states at both sizes
+let pngCacheChars = 0
+const PNG_CACHE_MAX_CHARS = 6_000_000 // ~6 MB: the current animations at both sizes, not all 660 frames
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -342,8 +346,11 @@ const isExtra = (anim: AnimName) => anim in EXTRA.states
 
 /** One loop of an animation, in ms. */
 function loopMs(anim: AnimName): number {
-  return SETS.smooth.states[anim].durations.reduce((a, b) => a + b, 0)
+  return drawnLoopMs(SETS.smooth.states[anim].durations, minFrameMs(anim))
 }
+
+/** The shortest a frame is drawn: 'failed' keeps its own quick flashes. */
+const minFrameMs = (anim: AnimName) => (anim === 'failed' ? 0 : MIN_FRAME_MS)
 
 /** How long a one-shot plays: three loops of a set's state, two of a (slower) shared action. */
 function oneShotMs(anim: AnimName): number {
@@ -520,15 +527,26 @@ async function loadPng($: $T, set: SpriteSet, state: AnimName, f: number, size: 
   const n = frames.big.length
   // The band ('small') shows a head-and-shoulders crop; the pane the full figure.
   const path = `${$.plugin.root}/assets/${frames.dir ?? set.name}/${state}/${f % n}${size === 'small' ? '-bust' : ''}.png`
-  if (pngCache.has(path)) return pngCache.get(path) ?? null
+  if (pngCache.has(path)) {
+    const hit = pngCache.get(path) ?? null
+    pngCache.delete(path) // to the back: recently used
+    pngCache.set(path, hit)
+    return hit
+  }
   let png: string | null = null
   try {
     png = (await $.fs.read(path, { as: 'bytes' })).base64
   } catch {
     png = null
   }
-  if (pngCache.size > PNG_CACHE_MAX) pngCache.clear() // 400+ shared frames: keep the long-lived process small
   pngCache.set(path, png)
+  pngCacheChars += png?.length ?? 0
+  // The process lives long: drop the least recently used frames, not all of them.
+  for (const [old, data] of pngCache) {
+    if (pngCacheChars <= PNG_CACHE_MAX_CHARS || old === path) break
+    pngCache.delete(old)
+    pngCacheChars -= data?.length ?? 0
+  }
   return png
 }
 
@@ -610,10 +628,9 @@ const restOffset = (room: number) => Math.floor(room / 2)
 
 function nextDelay(): number {
   const state = walk ? walkAnim(walk.dir) : animNow()
-  const d = activeSet.states[state].durations
-  const ms = d[frame % d.length] ?? 150
-  stride = state !== 'failed' && ms < MIN_FRAME_MS ? Math.round(MIN_FRAME_MS / ms) : 1
-  return ms * stride
+  const step = frameStep(activeSet.states[state].durations, frame, minFrameMs(state))
+  stride = step.frames
+  return step.ms
 }
 
 async function blitAll($: $T) {
@@ -648,7 +665,7 @@ async function tick($: $T) {
   const want = pickState(flags)
   const dozing = want === 'idle' && now - lastActivity > DOZE_AFTER_MS
 
-  if (now - lastPanePoll >= PANE_POLL_MS) {
+  if (mode !== 'off' && now - lastPanePoll >= PANE_POLL_MS) {
     lastPanePoll = now
     if (isDockedInBand) {
       // The band was asked for: a docked pane gives the room back to it.
@@ -739,15 +756,16 @@ function pickIdle(): { anim: AnimName; loops: number } {
   return IDLE_ROTATION[0]!
 }
 
+/** The tick in flight: a restarted clock waits for it, so two ticks never run at once. */
+let ticking: Promise<void> = Promise.resolve()
+
 function startClock($: $T) {
   timer?.cancel()
   const gen = ++clockGen // a restarted clock leaves the old loop to end
   const step = async () => {
-    try {
-      await tick($)
-    } catch {
-      // a lost frame is fine; the next tick draws again
-    }
+    const run = ticking.then(() => (gen === clockGen ? tick($) : undefined))
+    ticking = run.catch(() => {}) // a lost frame is fine; the next tick draws again
+    await ticking
     if (gen !== clockGen) return
     timer = $.clock.after(nextDelay(), () => void step())
   }
@@ -758,9 +776,9 @@ function startClock($: $T) {
  * Draw a change of mood now rather than at the next tick: asleep the clock
  * waits a slow sleeping frame, and an idle pose holds its open eyes a second.
  */
-async function wake($: $T) {
+async function wake($: $T, at?: number) {
   if (timer === null) return
-  const now = await $.clock.now()
+  const now = at ?? (await $.clock.now())
   if (isDozing || pickState({ ...flags, now }) !== shown) startClock($)
 }
 
@@ -848,8 +866,9 @@ export const register: Register = on => {
     const tool = String(e.tool)
     const { verb, target } = describeTool(tool, fields)
     const asksPerson = tool === 'AskUserQuestion' || tool === 'ExitPlanMode'
-    const id = e.tool_use_id ?? `${tool}:${await $.clock.now()}`
-    lastActivity = await $.clock.now()
+    const startedAt = await $.clock.now()
+    const id = e.tool_use_id ?? `${tool}:${startedAt}`
+    lastActivity = startedAt
     turnTools += 1
     if (asksPerson) flags = { ...flags, isWaiting: true }
     else flags = { ...flags, workAnim: toolAnim(tool, fields) }
@@ -859,7 +878,7 @@ export const register: Register = on => {
       tools: v.tools + 1,
       recent: [...v.recent, { id, tool, target, isOk: null } as RecentCall].slice(-8),
     }))
-    await wake($) // a new pose, or the dialog
+    await wake($, startedAt) // a new pose, or the dialog
 
     const result = await next(e)
 
@@ -874,7 +893,7 @@ export const register: Register = on => {
     } else {
       flags = { ...flags, isWaiting: false }
     }
-    await wake($)
+    await wake($, now)
     await update($, view, v => ({
       ...v,
       ...(isFailed ? { bubble: result.deny !== undefined ? `${tool} 被拒絕了…` : `唔… ${tool} 失敗了` } : {}),

@@ -215,9 +215,42 @@ export function makeCellCache() {
     let cells = cache.get(id)
     if (cells === undefined) {
       cells = frameCells(set, state, size, frame, width, offset, fill)
-      if (cache.size > 600) cache.clear()
-      cache.set(id, cells)
+      if (cache.size >= CELL_CACHE_MAX) cache.delete(cache.keys().next().value!) // the least recently used
+    } else {
+      cache.delete(id) // to the back: recently used
     }
+    cache.set(id, cells)
     return cells
   }
+}
+
+const CELL_CACHE_MAX = 600
+
+/**
+ * One step of the clock from frame `at`: frames shorter than `minMs` are
+ * merged with the ones after them so no draw comes sooner than `minMs`, but
+ * a loop's last frame (often a held pose) is always drawn.
+ * Returns how many frames to move on and how long to wait.
+ */
+export function frameStep(durations: number[], at: number, minMs: number): { frames: number; ms: number } {
+  const n = durations.length
+  const f = ((at % n) + n) % n
+  let ms = durations[f] ?? minMs
+  let frames = 1
+  while (ms < minMs && f + frames < n - 1) {
+    ms += durations[f + frames] ?? 0
+    frames += 1
+  }
+  return { frames, ms: Math.max(ms, minMs) }
+}
+
+/** One loop as the clock draws it, in ms. */
+export function drawnLoopMs(durations: number[], minMs: number): number {
+  let total = 0
+  for (let f = 0; f < durations.length; ) {
+    const step = frameStep(durations, f, minMs)
+    total += step.ms
+    f += step.frames
+  }
+  return total
 }
