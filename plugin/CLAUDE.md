@@ -18,7 +18,7 @@ Claude Code 的 function hooks mod：依事件切換 Claude ちゃん的動畫�
 | `hooks/frames-smooth.ts`、`frames-classic.ts`、`frames-extra.ts` | 字元畫資料與色盤，**自動產生** |
 | `assets/<smooth\|classic\|extra>/<動作>/<n>.png`、`<n>-bust.png` | 原圖動畫幀，**由 `tools/build_corrected.py` 安裝** |
 | `types/index.d.ts` | `$.state` 型別契約（`view`、`prefs`、`paneShown`、`imageFailed`） |
-| `tests/` | `render.test.tsx`（繪製與事件）、`shell.test.ts`（指令分類）、`sprite.test.ts`（幀節奏） |
+| `tests/` | `render.test.tsx`（繪製與事件）、`shell.test.ts`（指令分類）、`mood.test.ts`（狀態優先順序）、`sprite.test.ts`（幀節奏、base64、字元幀） |
 | `ATTRIBUTION.txt` | 隨插件發佈的署名；與根目錄 `ATTRIBUTION.txt` 同步更新 |
 
 ## 本地契約
@@ -51,6 +51,7 @@ claude plugin test plugin       # tests/ 的測試
 - `validate` 會警告本檔不是插件的 project context：本檔只供在 repo 裡開發時使用，這個警告屬預期。
 
 - 測試用 mock clock；跟時間有關的斷言要預留閒置輪播單幀最長約 2 秒的誤差，不靠 PNG 讀取次數判斷（有快取）。
+- 突變測試（`mutator`，故意改壞程式看測試抓不抓得到）：`mutator --no-coverage --test-command tools/mutator-test.sh plugin/hooks/<檔>.ts`；不能直接用 `claude plugin test`，它不會讀 mutator 臨時資料夾裡的捷徑。`mood.ts`、`shell.ts`、`sprite.ts` 剩下的存活突變都是等價的（超出範圍的 typed array 讀寫、到不了的 `??` 預設值）。
 - 型別檢查：在本機以 `npx -p typescript@5.6.3 tsc` 搭配 plugin-authoring skill 的 `claude-code.d.ts`；`tests/` 既有的型別錯誤與本 mod 無關。
 
 ## 子文件索引

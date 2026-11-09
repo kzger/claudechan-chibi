@@ -9,3 +9,5 @@ image26-v1/
 tools/assets/plugin-assets-corrected-v1/
 tools/assets/crosspet/
 docs/plugin-assets-audit-2026-11-06/
+.metrics/
+target/

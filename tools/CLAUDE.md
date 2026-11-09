@@ -14,6 +14,7 @@
 | `build_failed.py` | 改寫 `failed` 的原圖與字元幀 | 舊流程，**不要在修正版上執行**（沒有防呆） |
 | `correct_plugin_asset_candidates.py`、`verify_plugin_asset_candidates.py` | 產生與驗證修正版 v1 的一次性腳本（讀 `plugin/assets`、寫修正版目錄） | 已完成，有防呆 |
 | `make_readme_images.py` | 從 `plugin/assets` 畫 `docs/images/` 的三張 GIF | 現行 |
+| `mutator-test.sh` | 給 `mutator --test-command` 用的插件測試：把捷徑換成真檔案再跑 `claude plugin test` | 現行（用法見 `plugin/CLAUDE.md`） |
 
 製作素材（`tools/assets/plugin-assets-corrected-v1/`、`tools/assets/crosspet/`、根目錄 `image26-v1/`）只在製作端，不在 git 裡；位置與內容見 `docs/art-provenance.md`。
 

@@ -33,6 +33,17 @@ const CASES: [string, ReturnType<typeof shellWork>][] = [
   ["python3 - <<'EOF'\nimport json\nprint(json.load(open('v.json'))['errors'])\nEOF", 'running'],
   ['set -e; export X=1; make build', 'running'],
   ['timeout 600 uv run python verify.py', 'running'],
+  // what each step skips or weighs
+  ['', 'running'],
+  ['export X=1; cat a.txt', 'reading'],
+  ['cd repo && cat a.txt', 'reading'],
+  ['FOO=1 sudo cat a.txt', 'reading'],
+  ['timeout 30 rg TODO', 'searching'],
+  ['git push && git status', 'running'],
+  ['git status && cat a.txt', 'searching'],
+  ["perl -pi -e 's/a/b/' f.txt", 'writing'],
+  ['perl -ne print f.txt', 'running'],
+  ['grep x a 2>&1 | head', 'searching'],
 ]
 
 test('a shell command gets the pose of what it does', () => {

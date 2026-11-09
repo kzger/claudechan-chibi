@@ -97,7 +97,7 @@ const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 const B64_INDEX = new Uint8Array(128)
 for (let i = 0; i < B64.length; i++) B64_INDEX[B64.charCodeAt(i)] = i
 
-function fromBase64(text: string): Uint8Array {
+export function fromBase64(text: string): Uint8Array {
   const clean = text.replace(/=+$/, '')
   const out = new Uint8Array(Math.floor((clean.length * 3) / 4))
   let o = 0
@@ -114,7 +114,7 @@ function fromBase64(text: string): Uint8Array {
   return out
 }
 
-function toBase64(bytes: Uint8Array): string {
+export function toBase64(bytes: Uint8Array): string {
   let out = ''
   for (let i = 0; i < bytes.length; i += 3) {
     const a = bytes[i] ?? 0
@@ -238,7 +238,7 @@ export function frameStep(durations: number[], at: number, minMs: number): { fra
   let ms = durations[f] ?? minMs
   let frames = 1
   while (ms < minMs && f + frames < n - 1) {
-    ms += durations[f + frames] ?? 0
+    ms += durations[f + frames]! // f + frames < n - 1
     frames += 1
   }
   return { frames, ms: Math.max(ms, minMs) }

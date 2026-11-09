@@ -60,8 +60,8 @@ export function shellWork(command: string): ShellWork {
 
   // A redirect into a file (not 2>&1, not /dev/null).
   for (const m of text.matchAll(/(^|[^\d&<>])(\d?)>>?\s*([^\s&|;<>]+)/g)) {
-    const target = m[3] ?? ''
-    if (target && !target.startsWith('&') && !/^\/dev\/(null|stderr|stdout|tty)$/.test(target) && target !== '$null') return 'writing'
+    const target = m[3]! // the pattern always captures it
+    if (!target.startsWith('&') && !/^\/dev\/(null|stderr|stdout|tty)$/.test(target) && target !== '$null') return 'writing'
   }
 
   let runs = false
